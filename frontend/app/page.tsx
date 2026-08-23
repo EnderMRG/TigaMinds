@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Leaf, ChevronDown, Zap, ScanLine, TrendingUp, ArrowRight } from 'lucide-react';
+import anime from 'animejs';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const TOTAL_FRAMES = 50;
@@ -58,6 +59,85 @@ const CHAPTERS: Chapter[] = [
 ];
 
 // ─── Feature data ─────────────────────────────────────────────────────────────
+const TeaLeafLoader = () => {
+  const leafRef = useRef<SVGPathElement>(null);
+  const circleRef = useRef<SVGGElement>(null);
+
+  useEffect(() => {
+    if (!leafRef.current || !circleRef.current) return;
+    
+    // Animate the leaf path drawing
+    anime({
+      targets: leafRef.current,
+      strokeDashoffset: [anime.setDashoffset, 0],
+      easing: 'easeInOutSine',
+      duration: 2000,
+      direction: 'alternate',
+      loop: true
+    });
+
+    // Rotate the radar circle
+    anime({
+      targets: circleRef.current,
+      rotate: '1turn',
+      easing: 'linear',
+      duration: 8000,
+      loop: true
+    });
+
+    // Pulse the control dots
+    anime({
+      targets: '.control-dot',
+      scale: [0.5, 1.2],
+      opacity: [0.3, 1, 0.3],
+      easing: 'easeInOutSine',
+      duration: 1500,
+      delay: anime.stagger(200),
+      loop: true
+    });
+  }, []);
+
+  return (
+    <div className="relative flex items-center justify-center w-64 h-64">
+      <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full overflow-visible">
+        {/* Geometric crosshairs */}
+        <line x1="20" y1="50" x2="80" y2="50" stroke="rgba(34, 197, 94, 0.2)" strokeWidth="0.5" strokeDasharray="2 2" />
+        <line x1="50" y1="20" x2="50" y2="80" stroke="rgba(34, 197, 94, 0.2)" strokeWidth="0.5" strokeDasharray="2 2" />
+        
+        {/* Rotating radar elements */}
+        <g ref={circleRef} style={{ transformOrigin: '50px 50px' }}>
+          <circle cx="50" cy="50" r="35" fill="none" stroke="rgba(34, 197, 94, 0.3)" strokeWidth="0.5" strokeDasharray="4 6" />
+          <circle cx="50" cy="50" r="25" fill="none" stroke="rgba(34, 197, 94, 0.15)" strokeWidth="1" />
+          {/* A sweeping radar arc */}
+          <path d="M 50 15 A 35 35 0 0 1 85 50" fill="none" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1" />
+        </g>
+
+        {/* Central Detailed Tea Leaf */}
+        <g>
+          <path 
+            ref={leafRef}
+            d="M 50 92 L 50 82 C 15 70, 15 35, 50 8 C 85 35, 85 70, 50 82 Q 62 45, 50 16" 
+            fill="none" 
+            stroke="#22c55e" 
+            strokeWidth="1.5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+          />
+        </g>
+
+        {/* Orange control dots from user's reference */}
+        <g className="fill-orange-400">
+          <circle className="control-dot" cx="50" cy="15" r="1.5" />
+          <circle className="control-dot" cx="50" cy="85" r="1.5" />
+          <circle className="control-dot" cx="15" cy="50" r="1.5" />
+          <circle className="control-dot" cx="85" cy="50" r="1.5" />
+          <circle className="control-dot" cx="50" cy="50" r="1" fill="#22c55e" />
+        </g>
+      </svg>
+    </div>
+  );
+};
+
 const FEATURES = [
   {
     icon: Zap,
@@ -237,6 +317,18 @@ export default function HomePage() {
 
   return (
     <div className="bg-[#0a0f0a] text-white">
+      {/* ── Loading Overlay ── */}
+      <div 
+        className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0a0f0a] transition-opacity duration-1000 ${
+          framesLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+        }`}
+      >
+        <TeaLeafLoader />
+        <div className="mt-2 text-xs font-bold tracking-[0.4em] text-white/50 uppercase">
+          Initializing CHAI-NET
+        </div>
+      </div>
+
       {/* ── Navbar ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 md:px-10">
         <div className="w-[120px]" /> {/* Spacer for roaming logo */}

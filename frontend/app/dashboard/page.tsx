@@ -129,7 +129,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleSendAlert}
                 disabled={sendingAlert}
-                className="w-full mt-4 flex items-center gap-2 px-4 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                className="hidden w-full mt-4 items-center gap-2 px-4 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
               >
                 <Send className="h-4 w-4" />
                 <span className="font-medium">
