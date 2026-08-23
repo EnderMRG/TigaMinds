@@ -90,21 +90,25 @@ export default function MarketIntelligence() {
   const [marketInsight, setMarketInsight] = useState<any>(null);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/market/kpis")
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+    fetch(`${API_URL}/api/market/kpis`)
       .then(res => res.json())
       .then(setKpis);
 
-    fetch("http://localhost:8000/api/market/price-series")
+    fetch(`${API_URL}/api/market/price-series`)
       .then(res => res.json())
       .then(setPriceSeries);
 
-    fetch("http://localhost:8000/api/market/demand-volatility")
+    fetch(`${API_URL}/api/market/demand-volatility`)
       .then(res => res.json())
       .then(setDemandSupply);
-    fetch("http://localhost:8000/api/market/location-price-summary")
+      
+    fetch(`${API_URL}/api/market/location-price-summary`)
       .then(res => res.json())
       .then(setLocationPrices);
-    fetch("http://localhost:8000/api/market/insight")
+      
+    fetch(`${API_URL}/api/market/insight`)
       .then(res => res.json())
       .then(setMarketInsight);
   }, []);
