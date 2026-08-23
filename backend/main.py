@@ -288,6 +288,7 @@ allowed_origins.extend([
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.onrender\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -557,7 +558,7 @@ except Exception as e:
 # Load YOLOv5 object detection model for disease localization
 try:
     print("📦 Loading YOLOv5 model...")
-    yolo_model = torch.hub.load('ultralytics/yolov5', 'custom', path='models/best.pt', force_reload=False)
+    yolo_model = torch.hub.load('ultralytics/yolov5', 'custom', path='models/best.pt', force_reload=False, trust_repo=True)
     yolo_model.conf = 0.25  # Confidence threshold
     yolo_model.iou = 0.45   # NMS IOU threshold
     print("✅ YOLOv5 disease detection model loaded successfully")
