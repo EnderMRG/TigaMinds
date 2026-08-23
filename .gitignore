@@ -1,0 +1,68 @@
+# General
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+backend/.venv/
+
+# Node.js / Frontend / Next.js
+node_modules/
+frontend/node_modules/
+.next/
+out/
+build/
+.pnp
+.pnp.js
+.vercel/
+*.tsbuildinfo
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env
+*.pem
+
+# Credentials & Service Accounts
+mock-iot/serviceAccountKey.json
+backend/serviceAccountKey.json
+frontend/serviceAccountKey.json
+*serviceAccountKey*.json
+
+# Antigravity & Agent Temp Files
+brain/
+scratch/
