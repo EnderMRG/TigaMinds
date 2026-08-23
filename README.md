@@ -45,7 +45,7 @@ Built with the core principle of **"One screen, one decision,"** CHAI-NET ingest
 1. **Clone the repository**
    ```bash
    git clone https://github.com/EnderMRG/TigaMinds.git
-   cd tigaminds
+   cd TigaMinds
    ```
 
 2. **Backend Setup**
