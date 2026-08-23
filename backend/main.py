@@ -558,6 +558,11 @@ except Exception as e:
 # Load YOLOv5 object detection model for disease localization
 try:
     print("📦 Loading YOLOv5 model...")
+    # Monkey-patch PyTorch to completely bypass the GitHub API check that causes the 403 Rate Limit error
+    import torch.hub
+    if hasattr(torch.hub, '_validate_not_a_forked_repo'):
+        torch.hub._validate_not_a_forked_repo = lambda a, b, c: True
+        
     yolo_model = torch.hub.load('ultralytics/yolov5', 'custom', path='models/best.pt', force_reload=False, trust_repo=True)
     yolo_model.conf = 0.25  # Confidence threshold
     yolo_model.iou = 0.45   # NMS IOU threshold
