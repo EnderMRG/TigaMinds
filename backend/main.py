@@ -787,22 +787,27 @@ async def leaf_quality(file: UploadFile = File(...), user: User = Depends(get_cu
     )).resize((224, 224))
 
     # -------- CNN PREDICTION --------
-    img_array = np.array(image) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
+    if leaf_model:
+        img_array = np.array(image) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
 
-    prediction = leaf_model.predict(img_array)
-    predicted_class = int(np.argmax(prediction, axis=1)[0])
-    confidence = int(np.max(prediction) * 100)
+        prediction = leaf_model.predict(img_array)
+        predicted_class = int(np.argmax(prediction, axis=1)[0])
+        confidence = int(np.max(prediction) * 100)
 
-    print("\n🧠 CNN RAW OUTPUT:", prediction)
-    print("🧠 CNN predicted_class index:", predicted_class)
-    print("🧠 CNN confidence (%):", confidence)
+        print("\n🧠 CNN RAW OUTPUT:", prediction)
+        print("🧠 CNN predicted_class index:", predicted_class)
+        print("🧠 CNN confidence (%):", confidence)
 
-    if isinstance(class_labels, dict):
-        cnn_grade = index_to_label.get(predicted_class, "Unknown")
-        print("🧠 CNN mapped label:", cnn_grade)
+        if isinstance(class_labels, dict):
+            cnn_grade = index_to_label.get(predicted_class, "Unknown")
+            print("🧠 CNN mapped label:", cnn_grade)
+        else:
+            cnn_grade = class_labels[predicted_class]
     else:
-        cnn_grade = class_labels[predicted_class]
+        print("⚠️ CNN model missing (OOM fallback). Skipping CNN.")
+        cnn_grade = "Unknown"
+        confidence = 0
 
     # -------- SURFACE ANALYSIS --------
     surface = analyze_leaf_surface(image)
@@ -840,7 +845,16 @@ async def leaf_quality(file: UploadFile = File(...), user: User = Depends(get_cu
     print("RULE-BASED GRADE        :", rule_grade)
 
     # -------- FINAL DECISION LOGIC --------
-    if cnn_grade.lower() == "healthy":
+    if cnn_grade == "Unknown":
+        if yolo_detections:
+            final_grade = "Diseased"
+            final_disease = yolo_detections[0]["disease_name"]
+            decision_source = "YOLO"
+        else:
+            final_grade = rule_grade
+            final_disease = None if rule_grade.lower() == "healthy" else "surface-detected disease"
+            decision_source = "RULE_BASED"
+    elif cnn_grade.lower() == "healthy":
         # CNN says healthy → trust HSV rule-based system
         final_grade = rule_grade
         final_disease = None if rule_grade.lower() == "healthy" else "surface-detected disease"
