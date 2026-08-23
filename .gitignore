@@ -66,3 +66,8 @@ frontend/serviceAccountKey.json
 # Antigravity & Agent Temp Files
 brain/
 scratch/
+.agents/
+skills-lock.json
+PRODUCT.md
+.codex/
+.impeccable/
