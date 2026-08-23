@@ -6,14 +6,23 @@ wheel
 numpy>=1.24.3
 pillow>=10.0.1
 python-multipart>=0.0.6
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+gunicorn>=21.2.0
+setuptools
+wheel
+numpy>=1.24.3
+pillow>=10.0.1
+python-multipart>=0.0.6
 firebase-admin>=6.2.0
 google-generativeai>=0.8.0
 python-dotenv>=1.0.0
 openpyxl>=3.1.2
 opencv-python-headless>=4.8.1.78
 reportlab
-torch>=2.0.0
-torchvision>=0.15.0
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.0.1+cpu
+torchvision==0.15.2+cpu
 tqdm>=4.64.0
 PyYAML>=5.3.1
 requests>=2.23.0

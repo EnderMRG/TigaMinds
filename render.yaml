@@ -48,7 +48,7 @@ services:
     plan: free
     branch: main
     rootDir: frontend
-    buildCommand: npm install && npm run build -- --webpack
+    buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
       - key: NEXT_PUBLIC_API_URL
