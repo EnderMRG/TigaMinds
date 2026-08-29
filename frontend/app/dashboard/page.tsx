@@ -10,9 +10,7 @@ import LeafQualityScanner from '@/components/dashboard/leaf-quality-scanner';
 import FarmerActionSimulator from '@/components/dashboard/farmer-action-simulator';
 import MarketIntelligence from '@/components/dashboard/market-intelligence';
 import SatelliteCropHealth from '@/components/dashboard/satellite-crop-health';
-import RouteRealityEngine from '@/components/dashboard/route-reality-engine';
 import DigitalTwin from '@/components/dashboard/digital-twin';
-import BatchTraceability from '@/components/dashboard/batch-traceability';
 import ChatbotBubble from '@/components/dashboard/chatbot-bubble';
 import ProfileDropdown from '@/components/dashboard/profile-dropdown';
 import AccountSettings from '@/components/dashboard/account-settings';
@@ -89,19 +87,9 @@ export default function DashboardPage() {
       description: 'Planet Labs NDVI satellite analysis',
     },
     {
-      id: 'route',
-      label: 'Route Reality Engine',
-      description: 'OSRM last-km risk & price impact',
-    },
-    {
       id: 'subsidies',
       label: 'Subsidy Navigator',
       description: 'Official tea grower schemes & eligibility',
-    },
-    {
-      id: 'batch-traceability',
-      label: 'Batch Traceability',
-      description: 'Farm-to-cup quality predictor',
     },
     {
       id: 'digital-twin',
@@ -212,10 +200,8 @@ export default function DashboardPage() {
               {activeTab === 'action' && <FarmerActionSimulator />}
               {activeTab === 'market' && <MarketIntelligence />}
               {activeTab === 'satellite' && <SatelliteCropHealth />}
-              {activeTab === 'route' && <RouteRealityEngine />}
               {activeTab === 'subsidies' && <SubsidyInsuranceNavigator />}
               {activeTab === 'digital-twin' && <DigitalTwin />}
-              {activeTab === 'batch-traceability' && <BatchTraceability />}
               {activeTab === 'settings' && <AccountSettings />}
             </div>
           </div>

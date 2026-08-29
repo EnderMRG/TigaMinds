@@ -18,11 +18,12 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
-import { AlertCircle, Droplet, Thermometer, Wind, Sun, Lightbulb, Wifi, PenTool, ShieldAlert, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { AlertCircle, Droplet, Thermometer, Wind, Sun, Lightbulb, Wifi, PenTool, ShieldAlert, TrendingUp, TrendingDown, Minus, Sprout, PlusCircle, LineChart as LineChartIcon, Cloud, Plane, Beaker, Zap, FileText } from 'lucide-react';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CloudRain } from 'lucide-react';
 import { apiClient } from '@/lib/api';
+import { LeafPotentialCard } from "./leaf-potential-card";
 
 const IDEAL_RANGES = {
   soil_moisture: { min: 55, max: 65 },
@@ -97,6 +98,13 @@ export default function CultivationIntelligence() {
   useEffect(() => {
     const fetchAverages = async () => {
       try {
+        // Sync the latest ThingSpeak data into NeonDB first
+        try {
+          await apiClient.post('/api/iot/sync-thingspeak?channel_id=3474176');
+        } catch (e) {
+          console.error("ThingSpeak sync failed, but proceeding with cache:", e);
+        }
+
         const data = await apiClient.get("/api/farm/averages");
 
         if (data.status === "success") {
@@ -285,7 +293,7 @@ export default function CultivationIntelligence() {
 
     const fetchSmartAlert = async () => {
       try {
-        const data = await apiClient.get('/api/cultivation/smart-alert');
+        const data = await apiClient.get('/api/cultivation/field-health');
         setSmartAlert(data);
       } catch (err) {
         console.error('Smart alert fetch failed', err);
@@ -706,6 +714,10 @@ export default function CultivationIntelligence() {
             </Card>
           )}
 
+          {/* Pre-Harvest Leaf Potential Card */}
+          <div className="mt-6">
+            <LeafPotentialCard />
+          </div>
 
         </>
       ) : (

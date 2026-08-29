@@ -1,219 +1,177 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Beaker, ThermometerSun, Leaf, Clock, Star, Factory, FileText, CheckCircle2 } from "lucide-react";
+import {
+  Beaker, ThermometerSun, Leaf, Clock, Factory, FileText,
+  CheckCircle2, RefreshCw, ArrowDown, Sprout, TrendingUp,
+  Calculator
+} from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import {
+  RadarChart, Radar, PolarGrid, PolarAngleAxis
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart"
+import { LeafPotentialCard, type LeafPotentialResponse, type ZoneScore } from "./leaf-potential-card";
 
-type PredictionResponse = {
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type CupPrediction = {
   base_potential: number;
   tf_tr_ratio: number;
   predicted_grade: string;
   tasting_note: string;
 };
 
+// ─── Colour helpers ───────────────────────────────────────────────────────────
+const gradeColor = (g: string) => {
+  if (g === "A" || g === "Premium") return "text-amber-500";
+  if (g === "B" || g === "Standard") return "text-blue-500";
+  return "text-slate-400";
+};
+
+const gradeBg = (g: string) => {
+  if (g === "A" || g === "Premium") return "bg-amber-500/10 border-amber-500/30 text-amber-600";
+  if (g === "B" || g === "Standard") return "bg-blue-500/10 border-blue-500/30 text-blue-600";
+  return "bg-slate-500/10 border-slate-500/30 text-slate-500";
+};
+
+// ─── Main component ───────────────────────────────────────────────────────────
 export default function BatchTraceability() {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
 
-  // Field Data
-  const [ndvi, setNdvi] = useState([0.75]);
-  const [leafQuality, setLeafQuality] = useState([85]);
-  
-  // Factory Data
-  const [witheringTemp, setWitheringTemp] = useState([21]);
-  const [witheringHours, setWitheringHours] = useState([20]);
-  const [fermentationTemp, setFermentationTemp] = useState([26]);
-  const [fermentationHours, setFermentationHours] = useState([2.5]);
-
-  useEffect(() => {
-    const fetchPrediction = async () => {
-      setLoading(true);
-      try {
-        const response = await apiClient.post("/api/batch-predictor/simulate", {
-          ndvi: ndvi[0],
-          leaf_quality: leafQuality[0],
-          withering_temp: witheringTemp[0],
-          withering_hours: witheringHours[0],
-          fermentation_temp: fermentationTemp[0],
-          fermentation_hours: fermentationHours[0]
-        });
-        setPrediction(response);
-      } catch (err) {
-        console.error("Failed to fetch batch prediction", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const timer = setTimeout(() => {
-      fetchPrediction();
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [ndvi, leafQuality, witheringTemp, witheringHours, fermentationTemp, fermentationHours]);
-
+  // ── Stage 1 state ──
+  const [leafData, setLeafData] = useState<LeafPotentialResponse | null>(null);
   const handleLogGrade = () => {
     toast({
-      title: "Outcome Logged",
-      description: `Actual batch outcome verified as ${prediction?.predicted_grade}. Accuracy model updated.`,
-      variant: "default",
+      title: "Outcome Logged ✓",
+      description: `Predicted ${cupPrediction?.predicted_grade ?? "—"} confirmed. Accuracy model updated.`,
     });
   };
 
   return (
-    <div className="h-[calc(100vh-120px)] flex flex-col space-y-4 animate-in fade-in duration-500 overflow-hidden">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="h-[calc(100vh-120px)] flex flex-col gap-3 animate-in fade-in duration-500 overflow-hidden">
+
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between flex-shrink-0">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">AI Cup Quality Predictor</h2>
-          <p className="text-muted-foreground">
-            End-to-End Batch Traceability: Predict liquor grade before human tasting based on field and factory parameters.
+          <h2 className="text-xl font-bold tracking-tight">Farm-to-Cup Quality Pipeline</h2>
+          <p className="text-xs text-muted-foreground">
+            Stage 1: Pre-Harvest Leaf Potential  ·  Stage 2: Factory Cup Prediction
           </p>
         </div>
-        <Button variant="outline" className="gap-2" onClick={handleLogGrade}>
-          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+        <Button size="sm" variant="outline" className="gap-2" onClick={handleLogGrade}>
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
           Log Actual Grade
         </Button>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
-        
-        {/* Left Column: Traceability Monitors (Input) */}
-        <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
-          
-          <Card className="p-4 space-y-5 shadow-sm border-t-4 border-t-green-500">
-            <div>
-              <h3 className="font-bold text-base mb-1 flex items-center gap-2">
-                <Leaf className="h-4 w-4 text-green-500" />
-                Harvest Zone Data (Upstream)
-              </h3>
-              <p className="text-xs text-muted-foreground mb-4">
-                Raw material quality at time of plucking.
-              </p>
-            </div>
+      {/* ── Two-column main layout ── */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-3 min-h-0">
 
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-medium">NDVI (Crop Health)</label>
-                <span className="text-sm font-bold text-green-600">{ndvi[0]}</span>
-              </div>
-              <Slider value={ndvi} onValueChange={setNdvi} min={0.2} max={1.0} step={0.05} className="[&_[role=slider]]:bg-green-500" />
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-medium">Leaf Quality Scanner Score</label>
-                <span className="text-sm font-bold text-green-600">{leafQuality[0]}/100</span>
-              </div>
-              <Slider value={leafQuality} onValueChange={setLeafQuality} min={40} max={100} step={1} className="[&_[role=slider]]:bg-green-500" />
-            </div>
-          </Card>
-
-          <Card className="p-4 space-y-5 shadow-sm border-t-4 border-t-orange-500">
-            <div>
-              <h3 className="font-bold text-base mb-1 flex items-center gap-2">
-                <Factory className="h-4 w-4 text-orange-500" />
-                Factory Processing Monitor (Midstream)
-              </h3>
-              <p className="text-xs text-muted-foreground mb-4">
-                Simulate manufacturing conditions impacting Theaflavin formation.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              {/* Withering */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium flex items-center gap-1"><Clock className="h-3 w-3"/> Wither Time</label>
-                  <span className="text-xs font-bold text-orange-600">{witheringHours[0]}h</span>
-                </div>
-                <Slider value={witheringHours} onValueChange={setWitheringHours} min={10} max={30} step={1} className="[&_[role=slider]]:bg-orange-500" />
-              </div>
-              
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium flex items-center gap-1"><ThermometerSun className="h-3 w-3"/> Wither Temp</label>
-                  <span className="text-xs font-bold text-orange-600">{witheringTemp[0]}°C</span>
-                </div>
-                <Slider value={witheringTemp} onValueChange={setWitheringTemp} min={15} max={35} step={1} className="[&_[role=slider]]:bg-orange-500" />
-              </div>
-
-              {/* Fermentation */}
-              <div className="space-y-4 mt-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium flex items-center gap-1"><Clock className="h-3 w-3"/> Ferm. Time</label>
-                  <span className="text-xs font-bold text-orange-600">{fermentationHours[0]}h</span>
-                </div>
-                <Slider value={fermentationHours} onValueChange={setFermentationHours} min={0.5} max={5.0} step={0.1} className="[&_[role=slider]]:bg-orange-500" />
-              </div>
-              
-              <div className="space-y-4 mt-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium flex items-center gap-1"><ThermometerSun className="h-3 w-3"/> Ferm. Temp</label>
-                  <span className="text-xs font-bold text-orange-600">{fermentationTemp[0]}°C</span>
-                </div>
-                <Slider value={fermentationTemp} onValueChange={setFermentationTemp} min={20} max={35} step={1} className="[&_[role=slider]]:bg-orange-500" />
-              </div>
-            </div>
-          </Card>
+        {/* ══════════════════════════════════════════════════
+            STAGE 1 — Pre-Harvest Leaf Potential
+            ══════════════════════════════════════════════════ */}
+        <div className="flex flex-col gap-3 min-h-0 overflow-y-auto pr-1 scrollbar-thin">
+          <LeafPotentialCard onDataLoaded={(data) => setLeafData(data)} />
         </div>
 
-        {/* Right Column: AI Output */}
-        <div className="lg:col-span-1 h-full min-h-0 flex flex-col gap-4">
-          
-          {prediction && (
-            <Card className="p-6 shadow-sm border-2 border-primary/20 bg-gradient-to-br from-card to-secondary/20 flex-1 flex flex-col justify-center text-center space-y-6 relative overflow-hidden">
-              
-              <div className="absolute top-4 left-4 flex items-center gap-2 text-muted-foreground">
-                <Beaker className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-wider font-bold">Live Batch Simulation</span>
+        {/* ══════════════════════════════════════════════════
+            STAGE 2 — Factory Cup Predictor
+            ══════════════════════════════════════════════════ */}
+        <div className="flex flex-col gap-3 min-h-0 overflow-y-auto pr-1 scrollbar-thin">
+
+          {/* Connector */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0">
+            <ArrowDown className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+            <span className="font-medium text-foreground">Leaf enters factory</span>
+            <span>— configure processing conditions below to predict the final cup</span>
+          </div>
+
+          {/* Factory controls */}
+          <Card className="p-4 border-t-4 border-t-orange-500 flex-shrink-0">
+            <h3 className="font-bold text-sm flex items-center gap-1.5 mb-1">
+              <Factory className="h-4 w-4 text-orange-500" />
+              Stage 2 — Factory Processing Monitor
+            </h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Adjust withering &amp; fermentation to see how the factory transforms the leaf.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: "Wither Time", value: witheringHours[0], unit: "h", set: setWitheringHours, min: 10, max: 30, step: 1, state: witheringHours },
+                { label: "Wither Temp", value: witheringTemp[0], unit: "°C", set: setWitheringTemp, min: 15, max: 35, step: 1, state: witheringTemp },
+                { label: "Ferm. Time", value: fermentationHours[0], unit: "h", set: setFermentationHours, min: 0.5, max: 5, step: 0.1, state: fermentationHours },
+                { label: "Ferm. Temp", value: fermentationTemp[0], unit: "°C", set: setFermentationTemp, min: 20, max: 35, step: 1, state: fermentationTemp },
+              ].map(({ label, value, unit, set, min, max, step, state }) => (
+                <div key={label} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-medium flex items-center gap-1">
+                      {unit === "h" ? <Clock className="h-3 w-3 text-orange-500" /> : <ThermometerSun className="h-3 w-3 text-orange-500" />}
+                      {label}
+                    </label>
+                    <span className="text-xs font-bold text-orange-600">{value}{unit}</span>
+                  </div>
+                  <Slider value={state} onValueChange={set} min={min} max={max} step={step}
+                    className="[&_[role=slider]]:bg-orange-500" />
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Cup Prediction Output */}
+          {cupPrediction && (
+            <Card className={`p-4 flex-1 flex flex-col justify-center border-2 relative overflow-hidden ${
+              cupPrediction.predicted_grade === "Premium" ? "border-amber-500/30 bg-amber-50/30 dark:bg-amber-950/10" :
+              cupPrediction.predicted_grade === "Standard" ? "border-blue-500/30 bg-blue-50/30 dark:bg-blue-950/10" :
+              "border-slate-500/30"
+            }`}>
+              <div className="absolute top-3 left-3 flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-widest">
+                <Beaker className="h-3 w-3" /> Predicted Cup Profile
               </div>
 
-              <div className="pt-4">
-                <p className="text-sm text-muted-foreground uppercase tracking-widest mb-2 font-bold">Predicted Grade</p>
-                <div className={`text-5xl font-black ${
-                  prediction.predicted_grade === 'Premium' ? 'text-amber-500' :
-                  prediction.predicted_grade === 'Standard' ? 'text-blue-500' : 'text-slate-500'
-                }`}>
-                  {prediction.predicted_grade}
+              <div className="text-center mt-4 mb-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Final Cup Grade</p>
+                <div className={`text-4xl font-black ${gradeColor(cupPrediction.predicted_grade)}`}>
+                  {cupPrediction.predicted_grade}
                 </div>
               </div>
 
-              <div className="max-w-md mx-auto w-full space-y-2 text-left bg-background/80 p-4 rounded-lg border">
+              {/* TF:TR gauge */}
+              <div className="bg-background/70 rounded-lg border p-3 mb-3">
                 <div className="flex justify-between items-end mb-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">TF:TR Ratio (Briskness)</span>
-                  <span className="text-lg font-bold">{prediction.tf_tr_ratio.toFixed(3)}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">TF:TR Ratio (Briskness)</span>
+                  <span className="text-base font-bold">{cupPrediction.tf_tr_ratio.toFixed(3)}</span>
                 </div>
-                <Progress 
-                  value={(prediction.tf_tr_ratio / 0.15) * 100} 
-                  className={`h-2 ${prediction.tf_tr_ratio > 0.09 ? '[&>div]:bg-amber-500' : prediction.tf_tr_ratio > 0.06 ? '[&>div]:bg-blue-500' : '[&>div]:bg-slate-500'}`} 
+                <Progress
+                  value={(cupPrediction.tf_tr_ratio / 0.15) * 100}
+                  className={`h-2 ${cupPrediction.tf_tr_ratio > 0.09 ? "[&>div]:bg-amber-500" : cupPrediction.tf_tr_ratio > 0.06 ? "[&>div]:bg-blue-500" : "[&>div]:bg-slate-500"}`}
                 />
-                <div className="flex justify-between text-[10px] text-muted-foreground">
+                <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
                   <span>Dull/Flat</span>
                   <span>Premium Brisk</span>
                 </div>
               </div>
 
-              <div className="pt-4">
-                <div className="flex items-start gap-3 bg-secondary/50 p-4 rounded-xl text-left border">
-                  <FileText className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-bold text-sm mb-1">AI Tasting Note Prediction</h4>
-                    <p className="text-sm text-muted-foreground italic leading-relaxed">
-                      "{prediction.tasting_note}"
-                    </p>
-                  </div>
-                </div>
+              {/* Tasting note */}
+              <div className="flex items-start gap-2 bg-secondary/40 rounded-lg p-2.5 border">
+                <FileText className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-muted-foreground italic leading-relaxed">
+                  "{cupPrediction.tasting_note}"
+                </p>
               </div>
-              
             </Card>
           )}
-
         </div>
       </div>
     </div>

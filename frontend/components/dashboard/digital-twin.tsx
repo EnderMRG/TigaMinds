@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Activity, AlertTriangle, Droplets, ShieldAlert, Globe, IndianRupee } from "lucide-react";
+import { Activity, AlertTriangle, Droplets, ShieldAlert, Globe, IndianRupee, Leaf } from "lucide-react";
 import { apiClient } from "@/lib/api";
 
 type ForecastData = {
@@ -30,6 +31,7 @@ export default function DigitalTwin() {
   const [irrigationFreq, setIrrigationFreq] = useState([3]); // days
   const [interventionSpeed, setInterventionSpeed] = useState([2]); // days
   const [climateModel, setClimateModel] = useState<string>("normal");
+  const [expectedYield, setExpectedYield] = useState<number>(1500); // kg
   const [financials, setFinancials] = useState<Financials | null>(null);
 
   useEffect(() => {
@@ -39,7 +41,8 @@ export default function DigitalTwin() {
         const response = await apiClient.post("/api/digital-twin/forecast/demo_field", {
           irrigation_freq_days: irrigationFreq[0],
           disease_intervention_days: interventionSpeed[0],
-          climate_model: climateModel
+          climate_model: climateModel,
+          expected_monthly_yield: expectedYield
         });
         setForecastData(response.forecast);
         setSummary(response.summary);
@@ -57,7 +60,7 @@ export default function DigitalTwin() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [irrigationFreq, interventionSpeed, climateModel]);
+  }, [irrigationFreq, interventionSpeed, climateModel, expectedYield]);
 
   return (
     <div className="h-[calc(100vh-120px)] flex flex-col space-y-4 animate-in fade-in duration-500 overflow-hidden">
@@ -102,6 +105,24 @@ export default function DigitalTwin() {
                   <SelectItem value="la_nina">La Niña (Heavy Monsoon)</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Leaf className="h-4 w-4 text-emerald-600" />
+                  Expected Monthly Yield (kg)
+                </label>
+              </div>
+              <Input 
+                type="number" 
+                value={expectedYield} 
+                onChange={(e) => setExpectedYield(Number(e.target.value) || 0)}
+                className="font-mono"
+              />
+              <p className="text-xs text-muted-foreground">
+                Your farm's maximum potential harvest yield per month.
+              </p>
             </div>
 
             <div className="space-y-4">

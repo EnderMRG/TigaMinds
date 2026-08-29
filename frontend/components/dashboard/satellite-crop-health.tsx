@@ -13,7 +13,6 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from 'recharts';
-import ClimateRiskEngine from './climate-risk-engine';
 
 // ── Dynamic import: Leaflet MUST NOT render on server ─────────────────────────
 const SatelliteMapDraw = dynamic(
@@ -341,12 +340,7 @@ export default function SatelliteCropHealth() {
         </Card>
       )}
 
-      {/* Climate Risk Engine - Only show after analysis is done */}
-      {result && (
-        <div className="mt-8 pt-8 border-t border-border">
-          <ClimateRiskEngine autoRun={true} />
-        </div>
-      )}
+
 
       {/* How it works */}
       <Card className="p-4 bg-muted/20 border-border/50">
