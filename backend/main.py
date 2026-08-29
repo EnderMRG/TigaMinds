@@ -2970,7 +2970,7 @@ def calculate_environmental_score(sensor_data):
     total_score = 0
     
     # Soil Moisture (35% of environmental score)
-    sm = sensor_data.get("soil_moisture", 60)
+    sm = float(sensor_data.get("soil_moisture") or 60)
     if 55 <= sm <= 65:
         sm_score = 100
         sm_status = "optimal"
@@ -2988,7 +2988,7 @@ def calculate_environmental_score(sensor_data):
     total_score += sm_score * 0.35
     
     # Temperature (25% of environmental score)
-    temp = sensor_data.get("temperature", 22)
+    temp = float(sensor_data.get("temperature") or 22)
     if 18 <= temp <= 26:
         temp_score = 100
         temp_status = "optimal"
@@ -3003,7 +3003,7 @@ def calculate_environmental_score(sensor_data):
     total_score += temp_score * 0.25
     
     # Humidity (20% of environmental score)
-    hum = sensor_data.get("humidity", 70)
+    hum = float(sensor_data.get("humidity") or 70)
     if 65 <= hum <= 75:
         hum_score = 100
         hum_status = "optimal"
@@ -3018,7 +3018,7 @@ def calculate_environmental_score(sensor_data):
     total_score += hum_score * 0.20
     
     # Rainfall (20% of environmental score)
-    rain = sensor_data.get("rainfall_7d", 60)
+    rain = float(sensor_data.get("rainfall_7d") or 60)
     if 40 <= rain <= 80:
         rain_score = 100
         rain_status = "optimal"
@@ -3062,9 +3062,11 @@ def calculate_crop_health_score(leaf_scans):
     high_severity_count = 0
     
     for scan in leaf_scans:
-        grade = scan.get("grade", "").lower()
-        confidence = scan.get("confidence", 0.5)
-        severity = scan.get("severity", "Low")
+        grade = (scan.get("grade") or "").lower()
+        # Coerce to float, default to 0.5 if None or missing
+        confidence = float(scan.get("confidence") or 0.5)
+        # Coerce severity to string, default to "Low" if None
+        severity = scan.get("severity") or "Low"
         
         # Base score by grade
         if grade == "healthy":
@@ -3118,10 +3120,10 @@ def calculate_market_opportunity_score(market_data):
     if not market_data:
         return {"score": 50, "status": "unknown", "signal": "neutral"}
     
-    signal = market_data.get("signal", "neutral")
-    demand_index = market_data.get("demand_index", 50)
-    volatility = market_data.get("volatility", 2)
-    price_change_pct = market_data.get("price_change_pct", 0)
+    signal = market_data.get("signal") or "neutral"
+    demand_index = float(market_data.get("demand_index") or 50)
+    volatility = float(market_data.get("volatility") or 2)
+    price_change_pct = float(market_data.get("price_change_pct") or 0)
     
     # Base score by signal
     if signal == "opportunity":
@@ -3170,7 +3172,7 @@ def generate_disease_prevention_approaches(leaf_scans, sensor_data):
         return []
     
     # Analyze disease patterns
-    diseased_scans = [s for s in leaf_scans if s.get("grade", "").lower() == "diseased"]
+    diseased_scans = [s for s in leaf_scans if (s.get("grade") or "").lower() == "diseased"]
     disease_types = [s.get("disease_type") for s in diseased_scans if s.get("disease_type")]
     high_severity = [s for s in diseased_scans if s.get("severity") == "High"]
     
@@ -3293,7 +3295,7 @@ def generate_strategic_recommendations(env_score, crop_score, market_score, sens
     
     # Check leaf scans for disease
     if leaf_scans:
-        diseased_scans = [s for s in leaf_scans if s.get("grade", "").lower() == "diseased"]
+        diseased_scans = [s for s in leaf_scans if (s.get("grade") or "").lower() == "diseased"]
         if diseased_scans:
             high_severity = [s for s in diseased_scans if s.get("severity") == "High"]
             if high_severity:

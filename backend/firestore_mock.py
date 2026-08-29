@@ -180,17 +180,25 @@ class MockCollection:
         db = SessionLocal()
         try:
             doc_id = str(uuid.uuid4())
-            # Replace SERVER_TIMESTAMP with actual time
-            for k, v in data.items():
-                if v == SERVER_TIMESTAMP:
-                    data[k] = datetime.datetime.utcnow()
+            now = datetime.datetime.utcnow()
+
+            # Replace SERVER_TIMESTAMP sentinel with real datetime
+            # Use identity check (is) AND string representation check as fallback
+            # since the Firestore sentinel doesn't support == comparison reliably
+            for k in list(data.keys()):
+                v = data[k]
+                if v is SERVER_TIMESTAMP or (hasattr(v, '__class__') and 'Sentinel' in type(v).__name__):
+                    data[k] = now
                     
             if len(self.path) == 3 and self.path[0] == "farms" and self.path[2] == "leaf_scans":
                 farm_id = self.path[1]
+                raw_ts = data.pop("timestamp", now)
+                # Ensure timestamp is always a real datetime, not a sentinel
+                ts = raw_ts if isinstance(raw_ts, datetime.datetime) else now
                 scan = LeafScan(
                     id=doc_id,
                     farm_id=farm_id,
-                    timestamp=data.pop("timestamp", datetime.datetime.utcnow()),
+                    timestamp=ts,
                     image_url=data.pop("image_url", None),
                     result=data.pop("result", None),
                     confidence=data.pop("confidence", None),
@@ -202,10 +210,13 @@ class MockCollection:
                 db.commit()
             elif len(self.path) == 3 and self.path[0] == "farms" and self.path[2] == "action_plans":
                 farm_id = self.path[1]
+                raw_ts = data.pop("timestamp", now)
+                # Ensure timestamp is always a real datetime, not a sentinel
+                ts = raw_ts if isinstance(raw_ts, datetime.datetime) else now
                 plan = ActionPlan(
                     id=doc_id,
                     farm_id=farm_id,
-                    timestamp=data.pop("timestamp", datetime.datetime.utcnow()),
+                    timestamp=ts,
                     title=data.pop("title", None),
                     description=data.pop("description", None),
                     status=data.pop("status", None),
