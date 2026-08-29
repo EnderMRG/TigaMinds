@@ -54,4 +54,4 @@ services:
     startCommand: npm start
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://chaitea-backend.onrender.com
+        value: https://chaitea-backend-m3qy.onrender.com
