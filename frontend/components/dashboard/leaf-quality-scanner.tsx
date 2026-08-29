@@ -313,13 +313,13 @@ export default function LeafQualityScanner() {
 
 
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Leaf Health Status</p>
+      {/* Summary Cards - 2-column on mobile, 4 on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Card className="p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">Leaf Health Status</p>
 
           <p
-            className={`mt-2 text-2xl font-bold ${latestScan?.grade === 'healthy'
+            className={`mt-1 text-lg sm:text-2xl font-bold truncate ${latestScan?.grade === 'healthy'
               ? 'text-green-600'
               : latestScan
                 ? 'text-red-600'
@@ -334,10 +334,10 @@ export default function LeafQualityScanner() {
           </p>
         </Card>
 
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Latest Result</p>
+        <Card className="p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">Latest Result</p>
 
-          <p className="text-2xl font-bold text-foreground mt-2 capitalize">
+          <p className="text-lg sm:text-2xl font-bold text-foreground mt-1 capitalize truncate">
             {!latestScan
               ? '--'
               : latestScan.grade === 'healthy'
@@ -348,23 +348,22 @@ export default function LeafQualityScanner() {
           </p>
 
           {latestScan?.decision_source && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Decision source: {latestScan.decision_source}
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
+              Source: {latestScan.decision_source}
             </p>
           )}
         </Card>
 
-
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">{t('qualityScore')}</p>
-          <p className="text-2xl font-bold text-foreground mt-2">
+        <Card className="p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('qualityScore')}</p>
+          <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">
             {qualityScore}
           </p>
         </Card>
 
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Rejection Rate</p>
-          <p className="text-2xl font-bold text-foreground mt-2">
+        <Card className="p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">Rejection Rate</p>
+          <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">
             {rejectionRate}
           </p>
         </Card>

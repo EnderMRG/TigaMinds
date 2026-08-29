@@ -154,9 +154,11 @@ export default function CultivationIntelligence() {
     const fetchTemperatureSeries = async () => {
       try {
         const data = await apiClient.get("/api/farm/temperature-series");
-        setTemperatureSeries(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setTemperatureSeries(data);
+        }
       } catch (err) {
-        console.error("Failed to fetch temperature series", err);
+        console.warn("Using fallback temperature series:", err);
       }
     };
 
@@ -181,9 +183,11 @@ export default function CultivationIntelligence() {
     const fetchSoilMoistureSeries = async () => {
       try {
         const data = await apiClient.get("/api/farm/soil-moisture-series");
-        setSoilMoistureSeries(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setSoilMoistureSeries(data);
+        }
       } catch (err) {
-        console.error("Failed to fetch soil moisture series", err);
+        console.warn("Using fallback soil moisture series:", err);
       }
     };
 
@@ -193,6 +197,7 @@ export default function CultivationIntelligence() {
     const interval = setInterval(fetchSoilMoistureSeries, 300000);
     return () => clearInterval(interval);
   }, []);
+
 
   const handleManualInputChange = (field: string, value: string) => {
     setManualValues((prev) => ({ ...prev, [field]: value }));
@@ -406,57 +411,52 @@ export default function CultivationIntelligence() {
     });
 
     // In case an action had no explicit "why"
-    if (lastAction) {
-      parsed.push({ action: lastAction });
-    }
-
-    console.log('🔍 Parsed AI recommendations, output:', parsed);
     return parsed;
   };
 
-
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header with Mode Toggle */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">{t('cultivationIntelligence')}</h2>
-          <p className="text-muted-foreground mt-1">
-            {mode === 'iot' ? 'Real-time IoT monitoring and environmental analytics' : 'Manual data entry mode'}
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">{t('cultivationIntelligence')}</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
+            {mode === 'iot' ? t('realtimeIotDesc') : t('manualModeDesc')}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Button
             onClick={() => setMode('iot')}
             variant={mode === 'iot' ? 'default' : 'outline'}
-            className="gap-2"
+            className="flex-1 sm:flex-none gap-1.5 sm:gap-2 text-xs sm:text-sm h-9 sm:h-10"
           >
-            <Wifi className="h-4 w-4" />{t('iotMode')}</Button>
+            <Wifi className="h-4 w-4" />{t('iotMode')}
+          </Button>
           <Button
             onClick={() => setMode('manual')}
             variant={mode === 'manual' ? 'default' : 'outline'}
-            className="gap-2"
+            className="flex-1 sm:flex-none gap-1.5 sm:gap-2 text-xs sm:text-sm h-9 sm:h-10"
           >
-            <PenTool className="h-4 w-4" />{t('manualEntry')}</Button>
+            <PenTool className="h-4 w-4" />{t('manualEntry')}
+          </Button>
         </div>
       </div>
 
       {mode === 'iot' ? (
         <>
           {diseaseForecast?.forecasts?.length > 0 && (
-            <Card className="border-emerald-200 bg-white p-5 shadow-sm dark:border-emerald-900/50 dark:bg-slate-950">
-              <div className="flex items-start justify-between gap-3">
+            <Card className="border-emerald-200 bg-white p-4 sm:p-5 shadow-sm dark:border-emerald-900/50 dark:bg-slate-950">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3">
                 <div>
                   <div className="flex items-center gap-2">
                     <ShieldAlert className="h-5 w-5 text-emerald-600" />
-                    <h3 className="font-semibold text-foreground">{t('diseaseRiskForecast')}</h3>
+                    <h3 className="font-semibold text-foreground text-sm sm:text-base">{t('diseaseRiskForecast')}</h3>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{t('envPrecursorModel')} · {diseaseForecast.source === 'live_iot' ? t('liveIotData') : 'Illustrative demo data'}</p>
                 </div>
                 <span className="text-xs text-muted-foreground">{t('zone')}: {diseaseForecast.zone_id}</span>
               </div>
-              <div className="mt-4 grid gap-3 lg:grid-cols-3">
+              <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {diseaseForecast.forecasts.map((forecast: any) => {
                   const Icon = forecast.trend === 'rising' ? TrendingUp : forecast.trend === 'falling' ? TrendingDown : Minus;
                   const color = forecast.risk_level === 'High' ? 'text-red-600' : forecast.risk_level === 'Moderate' ? 'text-amber-600' : 'text-emerald-600';
@@ -479,23 +479,23 @@ export default function CultivationIntelligence() {
           {/* Alerts */}
           {smartAlert && (
             <div
-              className={`flex gap-3 rounded-lg border p-4 ${smartAlert.alert
+              className={`flex gap-3 rounded-lg border p-3.5 sm:p-4 ${smartAlert.alert
                 ? smartAlert.mode === 'AI'
                   ? 'border-red-400 bg-red-50'
                   : 'border-yellow-400 bg-yellow-50'
                 : 'border-green-400 bg-green-50'
                 }`}
             >
-              <AlertCircle className="mt-1" />
+              <AlertCircle className="mt-0.5 sm:mt-1 h-5 w-5 flex-shrink-0" />
 
               <div>
-                <h4 className="font-semibold">
+                <h4 className="font-semibold text-sm sm:text-base">
                   {smartAlert.alert
                     ? t('smartCropStressAlert')
                     : t('cropConditionsStable')}
                 </h4>
 
-                <p className="text-sm">
+                <p className="text-xs sm:text-sm mt-0.5">
                   {smartAlert.alert
                     ? `${t('riskScore')}: ${smartAlert.risk_score}/100`
                     : t('noCriticalStress')}
@@ -504,10 +504,8 @@ export default function CultivationIntelligence() {
             </div>
           )}
 
-
-
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Key Metrics - 2-column on mobile, 4 on desktop */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {[
               {
                 key: 'soil_moisture',
@@ -536,7 +534,7 @@ export default function CultivationIntelligence() {
               {
                 key: 'rainfall_7d',
                 icon: CloudRain,
-                label: t('avgRainfallLast7Days'),
+                label: t('avgRainfall'),
                 value: averages.rainfall_7d,
                 unit: 'mm',
                 color: 'text-indigo-600 dark:text-indigo-400',
@@ -545,31 +543,32 @@ export default function CultivationIntelligence() {
               const Icon = metric.icon;
 
               const range =
-                IDEAL_RANGES[metric.key as keyof typeof IDEAL_RANGES];
+                IDEAL_RANGES[metric.key as keyof typeof IDEAL_RANGES] || { min: 0, max: 100 };
 
               const status = getStatus(
                 metric.value,
-                range.min,
-                range.max
+                range?.min,
+                range?.max
               );
 
+
               return (
-                <Card key={idx} className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <Icon className={`h-5 w-5 ${metric.color}`} />
+                <Card key={idx} className="p-3 sm:p-4">
+                  <div className="flex items-start justify-between mb-1.5 sm:mb-2">
+                    <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${metric.color}`} />
                     <span
-                      className={`text-xs px-2 py-1 rounded-full ${statusStyles[status]
+                      className={`text-[10px] sm:text-xs px-2 py-0.5 sm:py-1 rounded-full font-medium ${statusStyles[status]
                         }`}
                     >
                       {status}
                     </span>
                   </div>
 
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">
                     {metric.label}
                   </p>
 
-                  <p className="text-2xl font-bold text-foreground mt-2">
+                  <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">
                     {metric.value !== undefined
                       ? `${metric.value.toFixed(1)} ${metric.unit}`
                       : '--'}
@@ -580,9 +579,9 @@ export default function CultivationIntelligence() {
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Moisture Levels */}
-            <Card className="p-6">
+            <Card className="p-4 sm:p-6">
               <h3 className="font-semibold text-foreground mb-4">{t('soilMoistureOverTime')}</h3>
               <ResponsiveContainer width="100%" height={250}>
                 <AreaChart data={soilMoistureSeries}                >

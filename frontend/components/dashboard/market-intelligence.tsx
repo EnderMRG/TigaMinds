@@ -137,8 +137,8 @@ export default function MarketIntelligence() {
         <p className="text-muted-foreground mt-1">{t('marketIntelligenceDesc')}</p>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Key Metrics - 2-column on mobile, 4 on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           {
             key: 'current_price',
@@ -177,14 +177,14 @@ export default function MarketIntelligence() {
         ].map((item, idx) => {
           const Icon = item.icon;
           return (
-            <Card key={idx} className="p-4">
+            <Card key={idx} className="p-3 sm:p-4">
               <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <span>{item.label}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+                    <span className="truncate">{item.label}</span>
 
                     {(item.isDemand || item.isVolatility) && (
-                      <div className="relative group">
+                      <div className="relative group flex-shrink-0">
                         <Info className="h-3.5 w-3.5 text-muted-foreground cursor-pointer" />
 
                         {/* Tooltip */}
@@ -199,9 +199,9 @@ export default function MarketIntelligence() {
                     )}
                   </div>
 
-                  <p className="text-2xl font-bold text-foreground mt-2">{item.value}</p>
+                  <p className="text-lg sm:text-2xl font-bold text-foreground mt-1 sm:mt-2 truncate">{item.value}</p>
                   <p
-                    className={`text-xs mt-2 ${item.status === 'up'
+                    className={`text-[10px] sm:text-xs mt-1 sm:mt-2 truncate ${item.status === 'up'
                       ? 'text-green-600 dark:text-green-400'
                       : item.status === 'down'
                         ? 'text-red-600 dark:text-red-400'
@@ -211,7 +211,7 @@ export default function MarketIntelligence() {
                     {item.change} {t('vsLastWeek')}
                   </p>
                 </div>
-                <Icon className="h-6 w-6 text-primary opacity-40" />
+                <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary opacity-40 flex-shrink-0 ml-1" />
               </div>
             </Card>
           );

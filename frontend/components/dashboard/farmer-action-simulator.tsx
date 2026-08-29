@@ -832,40 +832,40 @@ export default function FarmerActionSimulator() {
           )}
 
           {/* Primary Simulation Outcome - Hero Section */}
-          <Card className="p-8 border-2 border-primary/50 bg-gradient-to-br from-primary/5 via-background to-background">
+          <Card className="p-4 sm:p-6 lg:p-8 border-2 border-primary/50 bg-gradient-to-br from-primary/5 via-background to-background">
             <div className="mb-2 flex items-center gap-2">
-              <TrendingUp className="h-6 w-6 text-primary" />
-              <h3 className="font-bold text-foreground text-2xl">{t('ifYouFollowThisAction')}</h3>
+              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              <h3 className="font-bold text-foreground text-lg sm:text-2xl">{t('ifYouFollowThisAction')}</h3>
             </div>
-            <p className="text-muted-foreground mb-6">{t('projectedOutcomeAi')}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">{t('projectedOutcomeAi')}</p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                <p className="text-sm text-muted-foreground mb-1">{t('expectedYieldChange')}</p>
-                <p className="text-3xl font-bold text-green-600 dark:text-green-400">{simulationData.projectedOutcomes.yieldChange}</p>
-                <p className="text-xs text-muted-foreground mt-2">{t('additionalYieldEst')}</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <p className="text-xs sm:text-sm text-muted-foreground mb-1 truncate">{t('expectedYieldChange')}</p>
+                <p className="text-xl sm:text-3xl font-bold text-green-600 dark:text-green-400">{simulationData.projectedOutcomes.yieldChange}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2 truncate">{t('additionalYieldEst')}</p>
               </div>
 
-              <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                <p className="text-sm text-muted-foreground mb-1">{t('estimatedProfitChange')}</p>
-                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{simulationData.projectedOutcomes.profitChange}</p>
-                <p className="text-xs text-muted-foreground mt-2">{t('basedOnCurrentRates')}</p>
+              <div className="p-3 sm:p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                <p className="text-xs sm:text-sm text-muted-foreground mb-1 truncate">{t('estimatedProfitChange')}</p>
+                <p className="text-xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">{simulationData.projectedOutcomes.profitChange}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2 truncate">{t('basedOnCurrentRates')}</p>
               </div>
 
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-muted-foreground mb-1">{t('riskLevelLabel')}</p>
-                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-xs sm:text-sm text-muted-foreground mb-1 truncate">{t('riskLevelLabel')}</p>
+                <p className="text-xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">
                   {simulationData.projectedOutcomes.riskLevel}
                 </p>
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2 truncate">
                   {t('probBasedOnConditions')}
                 </p>
               </div>
 
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                <p className="text-sm text-muted-foreground mb-1">{t('harvestTiming')}</p>
-                <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{simulationData.projectedOutcomes.harvestTiming}</p>
-                <p className="text-xs text-muted-foreground mt-2">{t('alignsWithMarketPeak')}</p>
+              <div className="p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                <p className="text-xs sm:text-sm text-muted-foreground mb-1 truncate">{t('harvestTiming')}</p>
+                <p className="text-xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">{simulationData.projectedOutcomes.harvestTiming}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2 truncate">{t('alignsWithMarketPeak')}</p>
               </div>
             </div>
           </Card>

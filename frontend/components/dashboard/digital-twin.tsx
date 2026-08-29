@@ -65,20 +65,21 @@ export default function DigitalTwin() {
   }, [irrigationFreq, interventionSpeed, climateModel, expectedYield]);
 
   return (
-    <div className="h-[calc(100vh-120px)] flex flex-col space-y-4 animate-in fade-in duration-500 overflow-hidden">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="flex flex-col space-y-4 animate-in fade-in duration-500 min-h-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">{t('digitalTwin')}</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">{t('digitalTwin')}</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {t('fiveYearSimDesc')}
           </p>
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-0">
         
         {/* Left Column: Controls */}
-        <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto pr-2 scrollbar-thin">
+        <div className="lg:col-span-1 flex flex-col gap-4 lg:overflow-y-auto lg:pr-2 lg:max-h-[calc(100vh-200px)] scrollbar-thin">
+
           <Card className="p-4 space-y-5 shadow-sm">
             <div>
               <h3 className="font-bold text-base mb-1 flex items-center gap-2">
@@ -210,23 +211,24 @@ export default function DigitalTwin() {
         </div>
 
         {/* Right Column: Chart */}
-        <div className="lg:col-span-3 h-full min-h-0">
-          <Card className="p-4 h-full flex flex-col shadow-sm">
-            <div className="mb-4">
-              <h3 className="font-bold text-base">{t('ndviForecast5Year')}</h3>
+        <div className="lg:col-span-3 min-h-[380px] lg:min-h-0 h-full">
+          <Card className="p-3 sm:p-5 h-full flex flex-col shadow-sm">
+            <div className="mb-3 sm:mb-4">
+              <h3 className="font-bold text-sm sm:text-base">{t('ndviForecast5Year')}</h3>
               <p className="text-xs text-muted-foreground">
                 {t('ndviForecastDesc')}
               </p>
             </div>
             
-            <div className="flex-1 w-full relative">
+            <div className="flex-1 w-full min-h-[300px] relative">
               {loading && forecastData.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10 rounded-xl">
                   <div className="animate-pulse font-bold text-muted-foreground">{t('runningSimulation')}</div>
                 </div>
               )}
               
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={340}>
+
                 <LineChart data={forecastData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
                   <XAxis 
