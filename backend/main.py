@@ -1113,7 +1113,7 @@ Leaf Analysis Result:
 """
 
     try:
-        model = genai.GenerativeModel("models/gemini-2.0-flash")
+        model = genai.GenerativeModel("models/gemini-flash-latest")
         response = model.generate_content(prompt, request_options={"timeout": 4})
 
         if not response or not response.text:
@@ -3330,7 +3330,7 @@ Generate 3 approaches now:
 """
     
     try:
-        model = genai.GenerativeModel("models/gemini-pro")
+        model = genai.GenerativeModel("models/gemini-flash-latest")
         response = model.generate_content(prompt)
         
         if not response or not response.text:
@@ -3537,7 +3537,7 @@ Farm Analysis:
 """
     
     try:
-        model = genai.GenerativeModel("models/gemini-pro")
+        model = genai.GenerativeModel("models/gemini-flash-latest")
         response = model.generate_content(prompt)
         return response.text.strip() if response and response.text else None
     except Exception as e:
@@ -5947,7 +5947,7 @@ Briskness={farm_score['briskness']}, Body={farm_score['body']}, Aroma={farm_scor
 
     tasting_note = ""
     try:
-        model = genai.GenerativeModel("models/gemini-2.0-flash")
+        model = genai.GenerativeModel("models/gemini-flash-latest")
         response = model.generate_content(prompt)
         if response and response.text:
             tasting_note = response.text.strip()
