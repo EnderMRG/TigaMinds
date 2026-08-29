@@ -1073,6 +1073,26 @@ def forecast_price_from_dict(model_dict, steps=1):
 # -----------------------------
 
 def generate_leaf_quality_recommendations(grade: str, confidence: int):
+    lower_grade = str(grade).lower()
+    if "healthy" in lower_grade:
+        fallback = [
+            "Maintain standard 7-day plucking round for optimal two-leaves-and-a-bud harvest.",
+            "Apply balanced NPK foliar spray post-plucking to encourage uniform flush.",
+            "Continue routine soil moisture monitoring to prevent vegetative stress."
+        ]
+    elif "blister" in lower_grade or "rust" in lower_grade or "spot" in lower_grade or "diseased" in lower_grade:
+        fallback = [
+            "Apply preventive copper oxychloride (0.25%) spray on newly emerging shoots.",
+            "Improve air circulation through light bush sanitation and selective shade lopping.",
+            "Avoid plucking when canopy is damp to prevent mechanical spore transfer."
+        ]
+    else:
+        fallback = [
+            "Inspect bush vigor and verify soil pH (ideal range 4.5–5.5).",
+            "Ensure regular weed management around the collar region to minimize pest reservoirs.",
+            "Monitor tender flush for early signs of fungal or mite activity."
+        ]
+
     prompt = f"""
 You are an expert tea leaf pathologist.
 
@@ -1093,11 +1113,11 @@ Leaf Analysis Result:
 """
 
     try:
-        model = genai.GenerativeModel("models/gemini-flash-latest")
-        response = model.generate_content(prompt)
+        model = genai.GenerativeModel("models/gemini-2.0-flash")
+        response = model.generate_content(prompt, request_options={"timeout": 4})
 
         if not response or not response.text:
-            return ["No recommendations available for this scan."]
+            return fallback
 
         recommendations = []
         for line in response.text.split("\n"):
@@ -1107,13 +1127,11 @@ Leaf Analysis Result:
                     line.lstrip("-•* ").strip()
                 )
 
-        return recommendations or [
-            "Continue routine monitoring of leaf health."
-        ]
+        return recommendations or fallback
 
     except Exception as e:
-        print("❌ LEAF AI ERROR:", e)
-        return ["Leaf AI service unavailable."]
+        print("⚠️ Gemini Leaf AI notice (using expert agronomic fallback):", e)
+        return fallback
 
 
 def analyze_leaf_surface(image: Image.Image):
@@ -1312,24 +1330,25 @@ async def leaf_quality(file: UploadFile = File(...), user: User = Depends(get_cu
     FARM_ID = resolve_farm_id(user)
     prediction_validation = None
     if final_grade.lower() == "diseased" and final_disease:
-        normalized_disease = final_disease.lower()
-        readings = _load_disease_readings(
-            FARM_ID, "field-a-north", datetime.utcnow() - timedelta(days=10)
-        )
-        matching_forecast = next(
-            (
-                item for item in _disease_risk_forecast(readings)
-                if item["disease"].lower() in normalized_disease
-            ),
-            None,
-        )
-        if matching_forecast and matching_forecast["risk_score"] >= 70:
-            lead_days = matching_forecast["estimated_days_to_outbreak"] or 5
-            prediction_validation = {
-                "validated": True,
-                "days_ahead": lead_days,
-                "message": f"Predicted {lead_days} days in advance from environmental precursors.",
-            }
+        try:
+            normalized_disease = final_disease.lower()
+            readings = _load_disease_readings(FARM_ID, "field-a-north")
+            matching_forecast = next(
+                (
+                    item for item in _disease_risk_forecast(readings)
+                    if item["disease"].lower() in normalized_disease
+                ),
+                None,
+            )
+            if matching_forecast and matching_forecast["risk_score"] >= 70:
+                lead_days = matching_forecast["estimated_days_to_outbreak"] or 5
+                prediction_validation = {
+                    "validated": True,
+                    "days_ahead": lead_days,
+                    "message": f"Predicted {lead_days} days in advance from environmental precursors.",
+                }
+        except Exception as exc:
+            print(f"⚠️ Disease precursor validation: {exc}")
 
     leaf_scan_doc = {
         "grade": final_grade,
@@ -1346,12 +1365,14 @@ async def leaf_quality(file: UploadFile = File(...), user: User = Depends(get_cu
         "timestamp": SERVER_TIMESTAMP
     }
 
-    db.collection("farms") \
-      .document(FARM_ID) \
-      .collection("leaf_scans") \
-      .add(leaf_scan_doc)
-
-    print("✅ Leaf scan stored in Firestore")
+    try:
+        db.collection("farms") \
+          .document(FARM_ID) \
+          .collection("leaf_scans") \
+          .add(leaf_scan_doc)
+        print("✅ Leaf scan stored in Firestore")
+    except Exception as exc:
+        print(f"⚠️ Firestore leaf scan storage: {exc}")
 
     return {
         "grade": final_grade,
