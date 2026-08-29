@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useAlerts } from "@/context/alerts-context";
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis
 } from "recharts";
@@ -64,6 +65,7 @@ const gradeBg = (g: string) => {
 
 export function LeafPotentialCard({ onDataLoaded }: { onDataLoaded?: (data: LeafPotentialResponse) => void }) {
   const { toast } = useToast();
+  const { addAlert } = useAlerts();
   const [leafData, setLeafData] = useState<LeafPotentialResponse | null>(null);
   const [leafLoading, setLeafLoading] = useState(false);
   const [stage1Done, setStage1Done] = useState(false);
@@ -75,6 +77,15 @@ export function LeafPotentialCard({ onDataLoaded }: { onDataLoaded?: (data: Leaf
       setLeafData(res);
       setStage1Done(true);
       if (onDataLoaded) onDataLoaded(res);
+      // Alert if composite quality is poor
+      if (res?.farm_score?.composite < 40) {
+        addAlert({
+          title: 'Low Leaf Potential Score',
+          message: `Composite quality score is ${res.farm_score.composite}/100. Consider reviewing irrigation and canopy management.`,
+          severity: 'warning',
+          source: 'leaf_potential_composite',
+        });
+      }
     } catch (err) {
       console.error("Leaf potential fetch failed", err);
       toast({ title: "Error", description: "Failed to analyse leaf potential.", variant: "destructive" });

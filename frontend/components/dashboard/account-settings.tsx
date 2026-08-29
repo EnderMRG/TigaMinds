@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { User, Lock, Shield, LogOut, Save, X, Eye, EyeOff, Check } from 'lucide-react';
+import { User, Lock, Shield, LogOut, Save, X, Eye, EyeOff, Check, Bell } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 export default function AccountSettings() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -14,6 +15,11 @@ export default function AccountSettings() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Push Notifications state
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [isPushLoading, setIsPushLoading] = useState(false);
+  const [isTestPushLoading, setIsTestPushLoading] = useState(false);
 
   const { user, logout } = useAuth();
 
@@ -37,6 +43,15 @@ export default function AccountSettings() {
         location: '',
         farmName: user.email?.toLowerCase() === 'demo@chaitea.com' ? 'Demo Tea Estate' : 'My Tea Farm',
         farmSize: '',
+      });
+    }
+
+    // Check push subscription
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.pushManager.getSubscription().then((subscription) => {
+          setPushEnabled(!!subscription);
+        });
       });
     }
   }, [user]);
@@ -68,6 +83,117 @@ export default function AccountSettings() {
 
   const handlePrivacyToggle = (key: keyof typeof privacySettings) => {
     setPrivacySettings((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
+  const handlePushToggle = async () => {
+    setIsPushLoading(true);
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        toast.error('Push notifications are not supported by your browser');
+        return;
+      }
+      const registration = await navigator.serviceWorker.ready;
+      
+      if (pushEnabled) {
+        // Unsubscribe
+        const subscription = await registration.pushManager.getSubscription();
+        if (subscription) {
+          await subscription.unsubscribe();
+        }
+        setPushEnabled(false);
+        toast.success('Push notifications disabled');
+      } else {
+        // Subscribe
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          toast.error('Permission denied for push notifications');
+          return;
+        }
+
+        const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+        if (!publicVapidKey) {
+          toast.error('Missing VAPID key configuration');
+          return;
+        }
+
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+        });
+
+        // Send to backend
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/push/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: subscription.endpoint,
+            keys: {
+              p256dh: subscription.toJSON().keys?.p256dh,
+              auth: subscription.toJSON().keys?.auth
+            }
+          })
+        });
+
+        if (response.ok) {
+          setPushEnabled(true);
+          toast.success('Push notifications enabled');
+        } else {
+          toast.error('Failed to save push subscription on server');
+        }
+      }
+    } catch (error) {
+      console.error('Push toggle error:', error);
+      toast.error('Error toggling push notifications');
+    } finally {
+      setIsPushLoading(false);
+    }
+  };
+
+  const handleTestPush = async () => {
+    setIsTestPushLoading(true);
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      
+      if (!subscription) {
+        toast.error('You must enable push notifications first');
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/push/test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpoint: subscription.endpoint,
+          keys: {
+            p256dh: subscription.toJSON().keys?.p256dh,
+            auth: subscription.toJSON().keys?.auth
+          }
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Test notification sent!');
+      } else {
+        toast.error('Failed to send test notification');
+      }
+    } catch (error) {
+      console.error('Test push error:', error);
+      toast.error('Error testing push notification');
+    } finally {
+      setIsTestPushLoading(false);
+    }
   };
 
   const handleSaveProfile = () => {
@@ -391,6 +517,33 @@ export default function AccountSettings() {
                   className="w-5 h-5 rounded border-border cursor-pointer"
                 />
               </label>
+            </div>
+            <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+              <div>
+                <p className="font-medium text-foreground">Browser Push Notifications</p>
+                <p className="text-sm text-muted-foreground mt-1">Receive important alerts even when app is closed</p>
+              </div>
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleTestPush}
+                  disabled={!pushEnabled || isTestPushLoading}
+                  className="w-full sm:w-auto"
+                >
+                  <Bell className="h-4 w-4 mr-2" />
+                  {isTestPushLoading ? 'Testing...' : 'Test'}
+                </Button>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={pushEnabled}
+                    onChange={handlePushToggle}
+                    disabled={isPushLoading}
+                    className="w-5 h-5 rounded border-border cursor-pointer disabled:opacity-50"
+                  />
+                </label>
+              </div>
             </div>
           </div>
 

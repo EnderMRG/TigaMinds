@@ -24,6 +24,7 @@ import { db } from '@/lib/firebase';
 import { CloudRain } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { LeafPotentialCard } from "./leaf-potential-card";
+import { useAlerts } from '@/context/alerts-context';
 
 const IDEAL_RANGES = {
   soil_moisture: { min: 55, max: 65 },
@@ -74,6 +75,7 @@ export default function CultivationIntelligence() {
   const [loading, setLoading] = useState(false);
   const [diseaseForecast, setDiseaseForecast] = useState<any>(null);
   const [mode, setMode] = useState<'iot' | 'manual'>('iot');
+  const { addAlert } = useAlerts();
   const [manualValues, setManualValues] = useState({
     moisture: '',
     temperature: '',
@@ -109,6 +111,26 @@ export default function CultivationIntelligence() {
 
         if (data.status === "success") {
           setAverages(data.averages);
+          // Fire alerts for critical sensor values
+          const avgs = data.averages;
+          const checks: Array<{ key: keyof typeof IDEAL_RANGES; label: string; unit: string }> = [
+            { key: 'soil_moisture', label: 'Avg Soil Moisture', unit: '%' },
+            { key: 'temperature', label: 'Avg Temperature', unit: '°C' },
+            { key: 'humidity', label: 'Avg Humidity', unit: '%' },
+            { key: 'rainfall_7d', label: 'Avg Rainfall (7d)', unit: 'mm' },
+          ];
+          checks.forEach(({ key, label, unit }) => {
+            const val = avgs[key];
+            const status = getStatus(val, IDEAL_RANGES[key].min, IDEAL_RANGES[key].max);
+            if (status === 'critical') {
+              addAlert({
+                title: `${label} Critical`,
+                message: `Current value ${val}${unit} is outside safe range (${IDEAL_RANGES[key].min}–${IDEAL_RANGES[key].max}${unit}).`,
+                severity: 'critical',
+                source: `sensor_${key}`,
+              });
+            }
+          });
         }
       } catch (err) {
         console.error("Failed to fetch farm averages", err);
@@ -207,6 +229,19 @@ export default function CultivationIntelligence() {
       try {
         const data = await apiClient.get('/api/disease-risk/forecast/field-a-north');
         setDiseaseForecast(data);
+        // Fire alerts for high-risk diseases
+        if (data?.forecasts) {
+          data.forecasts.forEach((f: any) => {
+            if (f.risk_score >= 70) {
+              addAlert({
+                title: `Disease Alert: ${f.disease}`,
+                message: `${f.risk_level} risk (${f.risk_score}/100). ${f.preventive_action || f.trigger}`,
+                severity: f.risk_score >= 90 ? 'critical' : 'warning',
+                source: `disease_${f.disease.toLowerCase().replace(/\s+/g, '_')}`,
+              });
+            }
+          });
+        }
       } catch (err) {
         console.error('Failed to fetch disease risk forecast', err);
       }
@@ -295,6 +330,18 @@ export default function CultivationIntelligence() {
       try {
         const data = await apiClient.get('/api/cultivation/field-health');
         setSmartAlert(data);
+        // Fire alert based on risk score
+        if (data?.alert && data?.risk_score !== undefined) {
+          const score = data.risk_score;
+          if (score >= 60) {
+            addAlert({
+              title: 'Smart Crop Stress Alert',
+              message: `Risk Score ${score}/100 — ${data.reason || 'Multiple sensors outside ideal range.'}`,
+              severity: score >= 80 ? 'critical' : 'warning',
+              source: 'smart_crop_stress',
+            });
+          }
+        }
       } catch (err) {
         console.error('Smart alert fetch failed', err);
       }

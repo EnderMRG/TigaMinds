@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api';
+import { useAlerts } from '@/context/alerts-context';
 import {
   Satellite, AlertTriangle, CheckCircle2, Leaf, Droplets,
   Sun, RefreshCw, Info, Loader2, Zap, Activity
@@ -85,6 +86,7 @@ export default function SatelliteCropHealth() {
   const [loadingStage, setLoadingStage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [demoMode, setDemoMode] = useState(true);
+  const { addAlert } = useAlerts();
 
   // ── Handle polygon drawn ───────────────────────────────────────────────────
   const handlePolygonDrawn = useCallback((geometry: any, bounds: any) => {
@@ -126,6 +128,30 @@ export default function SatelliteCropHealth() {
         demo_mode: demoMode,
       });
       setResult(data);
+      // Fire alerts based on health class and anomaly
+      if (data.health_class === 'Stressed') {
+        addAlert({
+          title: 'Satellite: Crop Stress Detected',
+          message: `NDVI ${data.mean_ndvi.toFixed(3)} indicates stressed vegetation. Immediate field inspection recommended.`,
+          severity: 'critical',
+          source: 'satellite_health_class',
+        });
+      } else if (data.health_class === 'Moderate') {
+        addAlert({
+          title: 'Satellite: Moderate Crop Health',
+          message: `NDVI ${data.mean_ndvi.toFixed(3)} — crop health is below optimal. Monitor closely.`,
+          severity: 'info',
+          source: 'satellite_health_class',
+        });
+      }
+      if (data.anomaly?.is_anomaly) {
+        addAlert({
+          title: 'Satellite: NDVI Anomaly Detected',
+          message: data.anomaly.message || `Unusual NDVI drop of ${data.anomaly.drop?.toFixed(3)} detected vs historical baseline.`,
+          severity: 'warning',
+          source: 'satellite_ndvi_anomaly',
+        });
+      }
     } catch (err: any) {
       setError(err?.message || 'Analysis failed. Please try again.');
     } finally {

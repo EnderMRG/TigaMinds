@@ -91,7 +91,9 @@ from fastapi.responses import FileResponse
 import tempfile
 import torch
 import json
-from database import SessionLocal
+from database import SessionLocal, get_db
+from sqlalchemy.orm import Session
+import models_db
 from models_db import WeatherCache, ElevationCache, RouteCorridor, CropHealthScan, Scheme, SensorReading
 from concurrent.futures import ThreadPoolExecutor
 
@@ -545,6 +547,30 @@ def resolve_farm_id(user: User) -> str:
 
 
 app = FastAPI(title="CHAI-NET Backend")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Global handler so unhandled 500s always carry CORS headers
+# (FastAPI's default error handler bypasses middleware on crashes)
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    origin = request.headers.get("origin", "*")
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal server error", "detail": str(exc)},
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+        },
+    )
 
 
 class SubsidyChatRequest(BaseModel):
@@ -1816,19 +1842,19 @@ def _disease_risk_forecast(readings: list) -> list:
     if not readings:
         return []
     ordered = sorted(readings, key=lambda row: row.get("timestamp", datetime.min))
-    recent = ordered[-10:]
+    recent = ordered[-24:]
     humidity = [float(row.get("humidity", 0)) for row in recent]
     temperatures = [float(row.get("temperature", 0)) for row in recent]
-    wet_hours = sum(1 for h, t in zip(humidity, temperatures) if h > 90 and 15 <= t <= 25)
-    wet_days = sum(1 for h in humidity if h > 80)
-    dry_days = sum(1 for h in humidity if h < 50)
-    latest_humidity = humidity[-1]
-    latest_temperature = temperatures[-1]
+    wet_readings = sum(1 for h, t in zip(humidity, temperatures) if h > 85 and 15 <= t <= 28)
+    very_wet_readings = sum(1 for h in humidity if h > 90)
+    dry_readings = sum(1 for h in humidity if h < 60)
+    latest_humidity = humidity[-1] if humidity else 0
+    latest_temperature = temperatures[-1] if temperatures else 0
     previous_humidity = humidity[-4:-1] or humidity[:-1] or humidity
 
-    blister_score = min(100, round((wet_hours / 8) * 65 + max(0, wet_days - 3) * 7))
-    rust_score = min(100, round((dry_days / 5) * 55 + (25 if previous_humidity and max(previous_humidity) < 50 and latest_humidity >= 70 else 0)))
-    algal_score = min(100, round((wet_days / 7) * 60 + (25 if latest_temperature > 25 else 0)))
+    blister_score = min(100, round((wet_readings / 12) * 60 + max(0, very_wet_readings - 2) * 8))
+    rust_score = min(100, round((dry_readings / 10) * 55 + (25 if previous_humidity and max(previous_humidity) < 50 and latest_humidity >= 65 else 0)))
+    algal_score = min(100, round((very_wet_readings / 8) * 55 + (25 if latest_temperature > 24 else 0)))
 
     def forecast(name, score, trigger, action, lead_days):
         prior = max(0, score - (8 if score >= 50 else 3))
@@ -1843,50 +1869,48 @@ def _disease_risk_forecast(readings: list) -> list:
 
     return [
         forecast("Blister Blight", blister_score,
-                 f"{wet_hours} hours of high-humidity leaf-wetness conditions detected with temperatures near {latest_temperature:.1f}°C",
+                 f"{wet_readings} high-humidity readings detected with temperatures near {latest_temperature:.1f}°C",
                  "Consider preventive copper fungicide before visible symptoms appear.", 8),
         forecast("Red Rust", rust_score,
-                 f"{dry_days} low-humidity readings detected; latest humidity is {latest_humidity:.0f}%",
+                 f"{dry_readings} low-humidity readings detected; latest humidity is {latest_humidity:.0f}%",
                  "Inspect drought-stressed rows and restore moisture gradually; monitor new growth.", 10),
         forecast("Algal Leaf Spot", algal_score,
-                 f"{wet_days} high-humidity readings detected with recent temperature at {latest_temperature:.1f}°C",
+                 f"{very_wet_readings} very high-humidity readings detected with recent temperature at {latest_temperature:.1f}°C",
                  "Improve airflow and drainage around dense canopy areas.", 10),
     ]
 
 
-def _load_disease_readings(farm_id: str, zone_id: str, start: datetime) -> list:
+def _load_disease_readings(farm_id: str, zone_id: str) -> list:
     readings = []
     try:
         docs = (
             db.collection("farms").document(farm_id)
             .collection("sensors").document("sensors_root")
-            .collection("readings").where("timestamp", ">=", start)
-            .order_by("timestamp", direction=Query.ASCENDING).limit(500).stream()
+            .collection("readings")
+            .order_by("timestamp", direction=Query.DESCENDING).limit(24).stream()
         )
         for doc in docs:
             reading = doc.to_dict()
             reading_zone = reading.get("zone_id") or reading.get("zone")
             if not reading_zone or reading_zone == zone_id:
-                reading["timestamp"] = reading.get("timestamp") or start
                 readings.append(reading)
     except Exception as exc:
         print(f"⚠️ Disease forecast sensor read: {exc}")
+    
+    # Sort ascending for calculation
+    readings.sort(key=lambda r: r.get("timestamp", datetime.min))
     return readings
 
 
 @app.get("/api/disease-risk/forecast/{zone_id}")
 def disease_risk_forecast(zone_id: str, user: User = Depends(get_current_user)):
     farm_id = resolve_farm_id(user)
-    start = datetime.utcnow() - timedelta(days=10)
-    readings = _load_disease_readings(farm_id, zone_id, start)
-
+    readings = _load_disease_readings(farm_id, zone_id)
+    
     source = "live_iot"
-    if not readings and user.is_demo_view:
-        source = "illustrative_demo"
-        readings = [
-            {"timestamp": start + timedelta(hours=i * 12), "temperature": 18.5 + (i % 3), "humidity": 92 if i % 4 else 86}
-            for i in range(20)
-        ]
+    if not readings:
+        return {"zone_id": zone_id, "source": source, "lookback_days": 10, "forecasts": []}
+
     forecasts = _disease_risk_forecast(readings)
     return {"zone_id": zone_id, "source": source, "lookback_days": 10, "forecasts": forecasts}
 
@@ -5919,3 +5943,92 @@ Briskness={farm_score['briskness']}, Body={farm_score['body']}, Aroma={farm_scor
 # Trigger reload for yolo
 
 # Trigger reload for YOLO ultralytics installed
+
+
+# --- Push Notification Endpoints ---
+from pywebpush import webpush, WebPushException
+from pydantic import BaseModel
+
+class PushSubscriptionInfo(BaseModel):
+    endpoint: str
+    keys: dict
+
+@app.post('/api/push/subscribe')
+def subscribe_push(sub_info: PushSubscriptionInfo, db: Session = Depends(get_db)):
+    try:
+        sub = db.query(models_db.PushSubscription).filter(models_db.PushSubscription.endpoint == sub_info.endpoint).first()
+        if not sub:
+            sub = models_db.PushSubscription(
+                owner_id='default',
+                endpoint=sub_info.endpoint,
+                p256dh=sub_info.keys.get('p256dh', ''),
+                auth=sub_info.keys.get('auth', '')
+            )
+            db.add(sub)
+            db.commit()
+        return {'status': 'subscribed'}
+    except Exception as e:
+        print('subscribe_push DB error:', e)
+        raise HTTPException(status_code=503, detail='Database unavailable. Push subscription could not be saved.')
+
+@app.post('/api/push/test')
+def test_push(sub_info: PushSubscriptionInfo, db: Session = Depends(get_db)):
+    try:
+        sub = db.query(models_db.PushSubscription).filter(models_db.PushSubscription.endpoint == sub_info.endpoint).first()
+    except Exception as e:
+        print('test_push DB error:', e)
+        raise HTTPException(status_code=503, detail='Database unavailable.')
+
+    if not sub:
+        return {'error': 'Subscription not found'}
+
+    subscription_info = {
+        'endpoint': sub.endpoint,
+        'keys': {
+            'p256dh': sub.p256dh,
+            'auth': sub.auth
+        }
+    }
+    try:
+        webpush(
+            subscription_info=subscription_info,
+            data='Test Push Notification from TigaMinds!',
+            vapid_private_key=os.getenv('VAPID_PRIVATE_KEY'),
+            vapid_claims={'sub': 'mailto:admin@example.com'}
+        )
+        return {'status': 'success'}
+    except WebPushException as ex:
+        print('WebPush error:', ex)
+        return {'error': str(ex)}
+
+
+
+class PushSendPayload(BaseModel):
+    endpoint: str
+    keys: dict
+    title: str = 'TigaMinds Alert'
+    body: str = 'You have a new alert.'
+
+@app.post('/api/push/send')
+def send_push_alert(payload: PushSendPayload):
+    """Send a named push notification with custom title and body."""
+    subscription_info = {
+        'endpoint': payload.endpoint,
+        'keys': {
+            'p256dh': payload.keys.get('p256dh', ''),
+            'auth': payload.keys.get('auth', ''),
+        }
+    }
+    import json as _json
+    data = _json.dumps({'title': payload.title, 'body': payload.body, 'url': '/dashboard'})
+    try:
+        webpush(
+            subscription_info=subscription_info,
+            data=data,
+            vapid_private_key=os.getenv('VAPID_PRIVATE_KEY'),
+            vapid_claims={'sub': 'mailto:admin@example.com'}
+        )
+        return {'status': 'sent'}
+    except WebPushException as ex:
+        print('send_push_alert error:', ex)
+        return {'error': str(ex)}

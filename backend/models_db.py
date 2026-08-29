@@ -132,3 +132,14 @@ class Scheme(Base):
     application_window = Column(String, nullable=True)
     source_url = Column(String, nullable=True)
     region_specificity = Column(String, default='National')
+
+class PushSubscription(Base):
+    __tablename__ = "push_subscriptions"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    owner_id = Column(String, index=True, nullable=True)
+    endpoint = Column(String, unique=True, nullable=False)
+    p256dh = Column(String, nullable=False)
+    auth = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+

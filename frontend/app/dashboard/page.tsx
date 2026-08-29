@@ -15,6 +15,8 @@ import ChatbotBubble from '@/components/dashboard/chatbot-bubble';
 import ProfileDropdown from '@/components/dashboard/profile-dropdown';
 import AccountSettings from '@/components/dashboard/account-settings';
 import SubsidyInsuranceNavigator from '@/components/dashboard/subsidy-insurance-navigator';
+import NotificationBell from '@/components/dashboard/notification-bell';
+import { AlertsProvider } from '@/context/alerts-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { LanguageToggle } from '@/components/language-toggle';
 import { useLanguage } from '@/context/LanguageContext';
@@ -105,6 +107,7 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
+      <AlertsProvider>
       <div className="flex h-screen bg-background overflow-hidden">
         {/* Sidebar */}
         <div
@@ -188,6 +191,7 @@ export default function DashboardPage() {
                 })}
               </div>
               <LanguageToggle />
+              <NotificationBell />
               <ProfileDropdown onSettingsClick={() => setActiveTab('settings')} />
             </div>
           </div>
@@ -206,8 +210,9 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-        <ChatbotBubble />
+        <ChatbotBubble onNavigate={setActiveTab} />
       </div>
+      </AlertsProvider>
     </ProtectedRoute>
   );
 }
