@@ -994,7 +994,7 @@ except Exception as e:
     traceback.print_exc()
     yolo_model = None
 
-index_to_label = {v: k for k, v in class_labels.items()}
+index_to_label = {v: k for k, v in class_labels.items()} if class_labels else {}
 
 print("PRICE MODEL TYPE:", type(price_model))
 print("PRICE MODEL CONTENT:", price_model)

@@ -31,4 +31,7 @@ psycopg2-binary>=2.9.9
 pywebpush>=2.0.0
 pydantic>=2.0.0
 httpx>=0.25.0
+keras>=3.0.0
+ultralytics>=8.0.0
+
 
