@@ -3,8 +3,21 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, TrendingUp, TrendingDown, CheckCircle, AlertTriangle, BarChart3, Zap, Download, Copy } from 'lucide-react';
+import { AlertCircle, TrendingUp, TrendingDown, CheckCircle, AlertTriangle, BarChart3, Zap, Download, Copy, Truck } from 'lucide-react';
 import { apiClient } from '@/lib/api';
+import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
+
+const RouteMap = dynamic(() => import('./route-map'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[400px] w-full bg-muted/20 rounded-xl flex items-center justify-center border border-dashed border-muted-foreground/20">
+      <div className="text-muted-foreground text-sm flex items-center gap-2">
+        <Loader2 className="h-4 w-4 animate-spin" />Loading map…
+      </div>
+    </div>
+  ),
+});
 
 type SimulationData = {
   timestamp: string;
@@ -47,6 +60,7 @@ type SellingSuggestion = {
   expectedRevenue: string;
   timing: string;
   priority: 'high' | 'medium' | 'low';
+  price_per_kg?: number;
 };
 
 export default function FarmerActionSimulator() {
@@ -60,6 +74,76 @@ export default function FarmerActionSimulator() {
   const [sellingSuggestions, setSellingSuggestions] = useState<SellingSuggestion[]>([]);
   const [selectedApproach, setSelectedApproach] = useState<number>(0);
   const [showYieldAnalysis, setShowYieldAnalysis] = useState(false);
+
+  // Auction Center state
+  const [centers, setCenters] = useState<{ key: string; name: string; lat: number; lng: number }[]>([]);
+  const [selectedDest, setSelectedDest] = useState<string>('guwahati');
+  
+  // Infrastructure Reality & Map state
+  const [infraRealityOn, setInfraRealityOn] = useState(false);
+  const [routeData, setRouteData] = useState<{
+    route_risk: string;
+    spoilage_pct: number;
+    effective_price: number;
+    recommended_harvest_shift: number;
+    destination_name?: string;
+    distance_km?: number;
+    duration_min?: number;
+    alternate_route?: any;
+    origin?: any;
+    destination?: any;
+    segments?: any[];
+    geometry?: any;
+    base_price?: number;
+  } | null>(null);
+  const [infraLoading, setInfraLoading] = useState(false);
+  
+  useEffect(() => {
+    apiClient.get('/api/route/auction-centers')
+      .then((d: any) => setCenters(d.centers || []))
+      .catch(() => {});
+  }, []);
+
+  const fetchRouteAnalysis = async (dest: string) => {
+    try {
+      setInfraLoading(true);
+      const data = await apiClient.post('/api/route/analyze', {
+        origin_lat: 26.5714,
+        origin_lng: 93.8441,
+        origin_name: 'Tea Garden (Jorhat)',
+        destination: dest,
+      });
+      setRouteData({
+        route_risk: data.route_risk,
+        spoilage_pct: data.spoilage_pct,
+        effective_price: data.effective_price,
+        recommended_harvest_shift: data.recommended_harvest_shift,
+        destination_name: data.destination?.name,
+        distance_km: data.distance_km,
+        duration_min: data.duration_min,
+        alternate_route: data.alternate_route,
+        origin: data.origin,
+        destination: data.destination,
+        segments: data.segments,
+        geometry: data.geometry,
+        base_price: data.base_price,
+      });
+      return data;
+    } catch (e) {
+      console.error(e);
+      return null;
+    } finally {
+      setInfraLoading(false);
+    }
+  };
+
+  const toggleInfraReality = async () => {
+    const next = !infraRealityOn;
+    setInfraRealityOn(next);
+    if (next && !routeData) {
+      await fetchRouteAnalysis(selectedDest);
+    }
+  };
 
   // Helper function to clean markdown formatting from AI-generated text
   const cleanMarkdown = (text: string): string => {
@@ -224,10 +308,16 @@ export default function FarmerActionSimulator() {
       setLoading(true);
       setError(null);
 
-      // Call the new backend API with real Guwahati market data
+      // Auto-fetch route analysis to get spoilage for chosen destination BEFORE yield calculation
+      const routeRes = await fetchRouteAnalysis(selectedDest);
+      if (!infraRealityOn) setInfraRealityOn(true);
+      const spoilagePct = routeRes ? routeRes.spoilage_pct : 0.0;
+
+      // Call the new backend API with real Guwahati market data and route spoilage
       const data = await apiClient.post("/api/calculate-yield-strategy", {
         yield_kg: yieldKg,
-        selected_approach: selectedApproach
+        selected_approach: selectedApproach,
+        spoilage_pct: spoilagePct
       });
 
       // Map backend strategies to frontend format
@@ -236,7 +326,8 @@ export default function FarmerActionSimulator() {
         description: strategy.description,
         expectedRevenue: strategy.revenue_display,
         timing: strategy.timing,
-        priority: strategy.priority as 'high' | 'medium' | 'low'
+        priority: strategy.priority as 'high' | 'medium' | 'low',
+        price_per_kg: strategy.price_per_kg
       }));
 
       setSellingSuggestions(mappedSuggestions);
@@ -268,6 +359,8 @@ export default function FarmerActionSimulator() {
         riskFactors: data.risk_factors
       } : prev);
 
+
+
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -285,9 +378,12 @@ export default function FarmerActionSimulator() {
     if (isNaN(yieldKg) || yieldKg <= 0) return;
 
     try {
+      const spoilagePct = routeData ? routeData.spoilage_pct : 0.0;
+      
       const data = await apiClient.post("/api/calculate-yield-strategy", {
         yield_kg: yieldKg,
-        selected_approach: approachIndex
+        selected_approach: approachIndex,
+        spoilage_pct: spoilagePct
       });
 
       // Update only the projected outcomes based on new selection
@@ -331,7 +427,20 @@ export default function FarmerActionSimulator() {
             diseasePreventionApproaches: simulationData.diseasePreventionApproaches,
             marketInsights: simulationData.marketInsights,
             confidence: simulationData.confidence,
-            riskFactors: simulationData.riskFactors || []
+            riskFactors: simulationData.riskFactors || [],
+            routeData: infraRealityOn && routeData ? {
+              destination_name: routeData.destination_name,
+              route_risk: routeData.route_risk,
+              spoilage_pct: routeData.spoilage_pct,
+              effective_price: routeData.effective_price,
+              base_price: routeData.base_price,
+              distance_km: routeData.distance_km,
+              duration_min: routeData.duration_min,
+              alternate_route: routeData.alternate_route ? {
+                spoilage_pct: routeData.alternate_route.spoilage_pct,
+                effective_price: routeData.alternate_route.effective_price
+              } : null
+            } : null
           },
           yield_input: yieldInput ? parseFloat(yieldInput) : null,
           selected_approach: selectedApproach,
@@ -340,7 +449,8 @@ export default function FarmerActionSimulator() {
             description: s.description,
             expectedRevenue: s.expectedRevenue,
             timing: s.timing,
-            priority: s.priority
+            priority: s.priority,
+            price_per_kg: s.price_per_kg
           })) : []
         })
       });
@@ -407,49 +517,7 @@ export default function FarmerActionSimulator() {
         </div>
       </div>
 
-      {/* Recommended Action Card */}
-      <Card className="p-6 border-primary/30 bg-gradient-to-br from-primary/10 to-transparent">
-        <div className="flex items-start gap-4">
-          <Zap className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-          <div>
-            <h3 className="font-bold text-foreground text-lg mb-3">Recommended Action</h3>
-            <ul className="space-y-2 text-foreground">
-              {simulationData.recommendedActions.map((action, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                  <span>{action}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="text-sm text-muted-foreground mt-4 italic">Why? These actions will improve leaf quality and align with optimal market timing.</p>
-          </div>
-        </div>
-      </Card>
 
-      {/* Disease Prevention Approaches */}
-      {simulationData.diseasePreventionApproaches && simulationData.diseasePreventionApproaches.length > 0 && (
-        <Card className="p-6 border-orange-200 dark:border-orange-900/30 bg-gradient-to-br from-orange-50 dark:from-orange-900/10 to-transparent">
-          <div className="flex items-start gap-4">
-            <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-1" />
-            <div className="flex-1">
-              <h3 className="font-bold text-foreground text-lg mb-3">Disease Prevention Approaches (Last 7 Days Data)</h3>
-              <p className="text-sm text-muted-foreground mb-4">Based on 7 days of sensor and leaf scan data, here are 3 approaches to prevent and cure diseases:</p>
-              <div className="space-y-4">
-                {simulationData.diseasePreventionApproaches.map((approach, i) => (
-                  <div key={i} className="p-4 bg-white dark:bg-background rounded-lg border border-orange-200 dark:border-orange-900/50">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                        <span className="text-sm font-bold text-orange-600 dark:text-orange-400">{i + 1}</span>
-                      </div>
-                      <p className="text-foreground flex-1">{cleanMarkdown(approach)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
 
       {/* Yield Input and Selling Suggestions */}
       <Card className="p-6 border-primary/30 bg-gradient-to-br from-primary/10 to-transparent">
@@ -459,20 +527,56 @@ export default function FarmerActionSimulator() {
             <h3 className="font-bold text-foreground text-lg mb-3">Yield Analysis and Selling Strategy</h3>
             <p className="text-sm text-muted-foreground mb-4">Enter your total yield to get personalized selling recommendations based on real Guwahati market data</p>
 
-            <div className="flex gap-3 mb-6">
-              <input
-                type="number"
-                value={yieldInput}
-                onChange={(e) => setYieldInput(e.target.value)}
-                placeholder="Enter yield in kg (e.g., 1000)"
-                className="flex-1 px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <Button
-                onClick={generateYieldSuggestions}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                Analyze Yield
-              </Button>
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="flex-1">
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">Origin Location</label>
+                  <input
+                    type="text"
+                    value="Tea Garden (Jorhat)"
+                    disabled
+                    className="w-full px-4 py-2 border border-border rounded-lg bg-muted text-muted-foreground focus:outline-none"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">Destination Auction Center</label>
+                  <select
+                    value={selectedDest}
+                    onChange={(e) => setSelectedDest(e.target.value)}
+                    className="w-full px-4 py-2 border border-border rounded-lg bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary truncate"
+                  >
+                    {centers.map((c) => (
+                      <option key={c.key} value={c.key}>{c.name}</option>
+                    ))}
+                    {centers.length === 0 && (
+                      <>
+                        <option value="guwahati">Guwahati Tea Auction Centre</option>
+                        <option value="siliguri">Siliguri Tea Auction Centre</option>
+                        <option value="kolkata">Kolkata Tea Auction Centre</option>
+                        <option value="jorhat">Jorhat Tea Auction Centre</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row gap-3 items-end">
+                <div className="flex-1">
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">Yield (kg)</label>
+                  <input
+                    type="number"
+                    value={yieldInput}
+                    onChange={(e) => setYieldInput(e.target.value)}
+                    placeholder="Enter yield in kg (e.g., 1000)"
+                    className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <Button
+                  onClick={generateYieldSuggestions}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground py-2 h-[42px]"
+                >
+                  Analyze Yield
+                </Button>
+              </div>
             </div>
 
             {showYieldAnalysis && sellingSuggestions.length > 0 && (
@@ -534,9 +638,197 @@ export default function FarmerActionSimulator() {
         </div>
       </Card>
 
+      {/* Infra Reality live panel */}
+      {infraRealityOn && infraLoading && (
+        <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center text-xs text-blue-400 animate-pulse">
+          Fetching route risk from OSRM…
+        </div>
+      )}
+      {infraRealityOn && routeData && !infraLoading && (
+        <Card className="p-0 overflow-hidden border-blue-200 dark:border-blue-900 shadow-lg shadow-blue-500/10">
+          {/* Map Header */}
+          <div className="bg-blue-50 dark:bg-blue-900/30 p-4 border-b border-blue-100 dark:border-blue-800/50 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-blue-500 text-white flex items-center justify-center">
+                <AlertCircle className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Logistics & Route Analysis</p>
+                <p className="text-xs text-muted-foreground">To {routeData.destination_name} ({routeData.distance_km} km)</p>
+              </div>
+            </div>
+            <div className={`px-3 py-1 rounded-full text-xs font-bold border ${
+              routeData.route_risk === 'HIGH' ? 'bg-red-500/10 text-red-500 border-red-200' : 
+              routeData.route_risk === 'MEDIUM' ? 'bg-amber-500/10 text-amber-500 border-amber-200' : 
+              'bg-emerald-500/10 text-emerald-500 border-emerald-200'
+            }`}>
+              {routeData.route_risk} RISK
+            </div>
+          </div>
+
+          {/* Map View */}
+          <div className="h-[300px] w-full bg-slate-100 relative">
+            {routeData.origin && routeData.destination && routeData.segments && (
+              <RouteMap
+                origin={routeData.origin}
+                destination={routeData.destination}
+                segments={routeData.segments}
+                alternateGeometry={routeData.alternate_route?.geometry}
+              />
+            )}
+          </div>
+
+          {/* Detailed Route & Financials Breakdown */}
+          <div className="p-4 bg-background border-t border-blue-100 dark:border-blue-900/50">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Route Details */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Route Diagnostics</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Distance</p>
+                    <p className="text-lg font-bold text-foreground">{routeData.distance_km} km</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Estimated Duration</p>
+                    <p className="text-lg font-bold text-foreground">
+                      {routeData.duration_min ? `${Math.floor(routeData.duration_min / 60)}h ${Math.round(routeData.duration_min % 60)}m` : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+                <div className={`p-3 rounded-lg border ${
+                  routeData.route_risk === 'HIGH' ? 'bg-red-50 dark:bg-red-900/10 border-red-200 text-red-800 dark:text-red-300' :
+                  routeData.route_risk === 'MEDIUM' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 text-amber-800 dark:text-amber-300' :
+                  'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 text-emerald-800 dark:text-emerald-300'
+                }`}>
+                  <p className="text-xs font-bold uppercase mb-1 flex items-center gap-2">
+                    <AlertTriangle className="h-3 w-3" /> Route Advisory
+                  </p>
+                  <p className="text-sm">
+                    {routeData.route_risk === 'HIGH' ? 'Severe weather or infrastructure issues detected on this route. Expect high transit spoilage.' :
+                     routeData.route_risk === 'MEDIUM' ? 'Moderate delays expected. Ensure proper tarpaulin coverage.' :
+                     'Clear route. Optimal conditions for transit.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Financials Breakdown */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Effective Price Calculation</h4>
+                {(() => {
+                  const selectedPrice = sellingSuggestions[selectedApproach]?.price_per_kg || routeData.base_price || 0;
+                  const spoilage = routeData.spoilage_pct;
+                  const effectivePrice = selectedPrice * (1 - spoilage / 100);
+                  
+                  return (
+                    <div className="bg-muted/30 border rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Selected Approach Base Price</span>
+                        <span className="font-medium text-foreground">₹{selectedPrice.toFixed(2)}/kg</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-red-500 dark:text-red-400">Transit Spoilage Deduction ({spoilage}%)</span>
+                        <span className="font-medium text-red-500 dark:text-red-400">-₹{(selectedPrice * (spoilage / 100)).toFixed(2)}/kg</span>
+                      </div>
+                      <div className="h-px bg-border w-full my-2"></div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-foreground">Realized Effective Price</span>
+                        <span className="text-xl font-bold text-emerald-500 dark:text-emerald-400">₹{effectivePrice.toFixed(2)}<span className="text-sm text-emerald-500/70">/kg</span></span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Conditionally show these sections only when yield is entered */}
       {showYieldAnalysis && yieldInput && (
         <>
+          {/* Unified Action Plan */}
+          <Card className="p-6 border-primary/30 bg-gradient-to-br from-primary/10 to-transparent mb-6">
+            <div className="flex items-start gap-4">
+              <Zap className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+              <div className="w-full">
+                <h3 className="font-bold text-foreground text-lg mb-3">Unified Action Plan</h3>
+                <p className="text-sm text-muted-foreground mb-4">Correlated strategy based on your {yieldInput}kg yield, destination ({routeData?.destination_name || selectedDest}), and current environmental conditions.</p>
+                
+                <div className="space-y-6">
+                  {/* Logistics & Yield Strategy */}
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground uppercase tracking-wider mb-3">1. Logistics & Yield Strategy</h4>
+                    <ul className="space-y-3 text-foreground">
+                      <li className="flex items-start gap-3">
+                        <BarChart3 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-medium">Selected Approach: {sellingSuggestions[selectedApproach]?.title || 'Select an approach'}</span>
+                          <p className="text-sm text-muted-foreground mt-1">Execute this market approach to maximize revenue.</p>
+                        </div>
+                      </li>
+                      {routeData && (
+                        <li className="flex items-start gap-3">
+                          <Truck className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-medium">
+                              Logistics Action: {
+                                routeData.route_risk === 'HIGH' 
+                                  ? 'Delay dispatch or select alternate route to avoid high spoilage.'
+                                  : routeData.route_risk === 'MEDIUM'
+                                    ? 'Proceed with caution. Monitor weather along the route.'
+                                    : 'Optimal dispatch conditions. Proceed with current route.'
+                              }
+                            </span>
+                            <p className="text-sm text-muted-foreground mt-1">Mitigate the expected {routeData.spoilage_pct}% spoilage risk.</p>
+                          </div>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+
+                  {/* Environmental & Crop Strategy */}
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground uppercase tracking-wider mb-3">2. Environmental & Crop Strategy</h4>
+                    <ul className="space-y-3 text-foreground">
+                      {simulationData.recommendedActions.map((action, i) => (
+                        <li key={i} className="flex items-start gap-3">
+                          <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                          <span className="font-medium text-foreground">{action}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Disease Prevention Approaches */}
+          {simulationData.diseasePreventionApproaches && simulationData.diseasePreventionApproaches.length > 0 && (
+            <Card className="p-6 border-orange-200 dark:border-orange-900/30 bg-gradient-to-br from-orange-50 dark:from-orange-900/10 to-transparent mb-6">
+              <div className="flex items-start gap-4">
+                <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <h3 className="font-bold text-foreground text-lg mb-3">Disease Prevention Approaches (Last 7 Days Data)</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Based on 7 days of sensor and leaf scan data, here are 3 approaches to prevent and cure diseases:</p>
+                  <div className="space-y-4">
+                    {simulationData.diseasePreventionApproaches.map((approach, i) => (
+                      <div key={i} className="p-4 bg-white dark:bg-background rounded-lg border border-orange-200 dark:border-orange-900/50">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                            <span className="text-sm font-bold text-orange-600 dark:text-orange-400">{i + 1}</span>
+                          </div>
+                          <p className="text-foreground flex-1">{cleanMarkdown(approach)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* Primary Simulation Outcome - Hero Section */}
           <Card className="p-8 border-2 border-primary/50 bg-gradient-to-br from-primary/5 via-background to-background">
             <div className="mb-2 flex items-center gap-2">

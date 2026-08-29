@@ -190,6 +190,7 @@ export default function LeafQualityScanner() {
           normalizedGrade === 'healthy'
             ? []
             : [data.disease_type ?? 'Disease detected'],
+          prediction_validation: data.prediction_validation ?? null,
       };
 
 
@@ -366,6 +367,15 @@ export default function LeafQualityScanner() {
           </p>
         </Card>
       </div>
+
+      {result?.prediction_validation?.validated && (
+        <Card className="border-emerald-300 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
+          <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+            <CheckCircle className="h-4 w-4" />
+            {result.prediction_validation.message}
+          </div>
+        </Card>
+      )}
 
       {/* YOLO Object Detection Results */}
       {yoloDetections && yoloDetections.length > 0 && (

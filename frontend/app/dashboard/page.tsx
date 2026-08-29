@@ -9,9 +9,14 @@ import CultivationIntelligence from '@/components/dashboard/cultivation-intellig
 import LeafQualityScanner from '@/components/dashboard/leaf-quality-scanner';
 import FarmerActionSimulator from '@/components/dashboard/farmer-action-simulator';
 import MarketIntelligence from '@/components/dashboard/market-intelligence';
+import SatelliteCropHealth from '@/components/dashboard/satellite-crop-health';
+import RouteRealityEngine from '@/components/dashboard/route-reality-engine';
+import DigitalTwin from '@/components/dashboard/digital-twin';
+import BatchTraceability from '@/components/dashboard/batch-traceability';
 import ChatbotBubble from '@/components/dashboard/chatbot-bubble';
 import ProfileDropdown from '@/components/dashboard/profile-dropdown';
 import AccountSettings from '@/components/dashboard/account-settings';
+import SubsidyInsuranceNavigator from '@/components/dashboard/subsidy-insurance-navigator';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { LanguageToggle } from '@/components/language-toggle';
 import { useLanguage } from '@/context/LanguageContext';
@@ -77,6 +82,31 @@ export default function DashboardPage() {
       id: 'market',
       label: t('marketIntelligence'),
       description: t('priceForecastingTrends'),
+    },
+    {
+      id: 'satellite',
+      label: 'Crop Health Monitor',
+      description: 'Planet Labs NDVI satellite analysis',
+    },
+    {
+      id: 'route',
+      label: 'Route Reality Engine',
+      description: 'OSRM last-km risk & price impact',
+    },
+    {
+      id: 'subsidies',
+      label: 'Subsidy Navigator',
+      description: 'Official tea grower schemes & eligibility',
+    },
+    {
+      id: 'batch-traceability',
+      label: 'Batch Traceability',
+      description: 'Farm-to-cup quality predictor',
+    },
+    {
+      id: 'digital-twin',
+      label: 'Digital Twin',
+      description: '5-Year climate resilience projection',
     },
     {
       id: 'settings',
@@ -181,6 +211,11 @@ export default function DashboardPage() {
               {activeTab === 'leaf-quality' && <LeafQualityScanner />}
               {activeTab === 'action' && <FarmerActionSimulator />}
               {activeTab === 'market' && <MarketIntelligence />}
+              {activeTab === 'satellite' && <SatelliteCropHealth />}
+              {activeTab === 'route' && <RouteRealityEngine />}
+              {activeTab === 'subsidies' && <SubsidyInsuranceNavigator />}
+              {activeTab === 'digital-twin' && <DigitalTwin />}
+              {activeTab === 'batch-traceability' && <BatchTraceability />}
               {activeTab === 'settings' && <AccountSettings />}
             </div>
           </div>

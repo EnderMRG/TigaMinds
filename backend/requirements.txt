@@ -30,3 +30,7 @@ twilio>=8.10.0
 joblib
 pandas
 scikit-learn
+matplotlib
+scipy
+tifffile
+rasterio>=1.3.9

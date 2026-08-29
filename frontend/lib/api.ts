@@ -63,11 +63,18 @@ export class ApiClient {
         });
 
         if (!response.ok) {
-            throw new Error(`API Error: ${response.statusText}`);
+            console.error('❌ API Error:', response.status, response.statusText, endpoint);
+            let errorDetail = response.statusText;
+            try {
+                const errBody = await response.json();
+                errorDetail = errBody?.detail || errBody?.error || errorDetail;
+            } catch { }
+            throw new Error(`API Error ${response.status}: ${errorDetail}`);
         }
 
         return response.json();
     }
+
 
     async postFormData(endpoint: string, formData: FormData) {
         const token = this.getToken ? await this.getToken() : null;

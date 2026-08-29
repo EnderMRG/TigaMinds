@@ -18,7 +18,7 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
-import { AlertCircle, Droplet, Thermometer, Wind, Sun, Lightbulb, Wifi, PenTool } from 'lucide-react';
+import { AlertCircle, Droplet, Thermometer, Wind, Sun, Lightbulb, Wifi, PenTool, ShieldAlert, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CloudRain } from 'lucide-react';
@@ -71,6 +71,7 @@ const statusStyles = {
 export default function CultivationIntelligence() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [diseaseForecast, setDiseaseForecast] = useState<any>(null);
   const [mode, setMode] = useState<'iot' | 'manual'>('iot');
   const [manualValues, setManualValues] = useState({
     moisture: '',
@@ -190,6 +191,21 @@ export default function CultivationIntelligence() {
     });
 
     return () => unsub();
+  }, [mode]);
+
+  useEffect(() => {
+    if (mode !== 'iot') return;
+    const fetchDiseaseForecast = async () => {
+      try {
+        const data = await apiClient.get('/api/disease-risk/forecast/field-a-north');
+        setDiseaseForecast(data);
+      } catch (err) {
+        console.error('Failed to fetch disease risk forecast', err);
+      }
+    };
+    fetchDiseaseForecast();
+    const interval = setInterval(fetchDiseaseForecast, 300000);
+    return () => clearInterval(interval);
   }, [mode]);
 
   useEffect(() => {
@@ -375,6 +391,38 @@ export default function CultivationIntelligence() {
 
       {mode === 'iot' ? (
         <>
+          {diseaseForecast?.forecasts?.length > 0 && (
+            <Card className="border-emerald-200 bg-white p-5 shadow-sm dark:border-emerald-900/50 dark:bg-slate-950">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <ShieldAlert className="h-5 w-5 text-emerald-600" />
+                    <h3 className="font-semibold text-foreground">Disease Risk Forecast</h3>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">Environmental precursor model, 5–10 days ahead · {diseaseForecast.source === 'live_iot' ? 'Live IoT data' : 'Illustrative demo data'}</p>
+                </div>
+                <span className="text-xs text-muted-foreground">Zone: {diseaseForecast.zone_id}</span>
+              </div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                {diseaseForecast.forecasts.map((forecast: any) => {
+                  const Icon = forecast.trend === 'rising' ? TrendingUp : forecast.trend === 'falling' ? TrendingDown : Minus;
+                  const color = forecast.risk_level === 'High' ? 'text-red-600' : forecast.risk_level === 'Moderate' ? 'text-amber-600' : 'text-emerald-600';
+                  return (
+                    <div key={forecast.disease} className="rounded-lg border border-border p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold text-foreground">{forecast.disease}</span>
+                        <span className={`flex items-center gap-1 text-xs font-bold ${color}`}><Icon className="h-3.5 w-3.5" />{forecast.risk_level}</span>
+                      </div>
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full ${forecast.risk_level === 'High' ? 'bg-red-500' : forecast.risk_level === 'Moderate' ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${forecast.risk_score}%` }} /></div>
+                      <p className="mt-2 text-xs text-muted-foreground">{forecast.risk_score}/100 · {forecast.trigger}</p>
+                      {forecast.estimated_days_to_outbreak && <p className="mt-1 text-xs font-medium text-foreground">Potential outbreak window: {forecast.estimated_days_to_outbreak} days</p>}
+                      {forecast.risk_level === 'High' && <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-300">Action: {forecast.preventive_action}</p>}
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
           {/* Alerts */}
           {smartAlert && (
             <div
