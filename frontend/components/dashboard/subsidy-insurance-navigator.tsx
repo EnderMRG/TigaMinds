@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from '@/context/LanguageContext';
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ interface Scheme {
 }
 
 export default function SubsidyInsuranceNavigator() {
+  const { t } = useLanguage();
   const [estateSize, setEstateSize] = useState('2');
   const [growerType, setGrowerType] = useState('individual');
   const [activity, setActivity] = useState('replanting');
@@ -65,8 +67,8 @@ export default function SubsidyInsuranceNavigator() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Subsidy & Insurance Navigator</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Official scheme records for tea growers. Assam Budget 2026–27 items are recently announced; confirm disbursement status with the relevant department.</p>
+        <h2 className="text-2xl font-bold text-foreground">{t('subsidyNavigator')}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t('subsidyInsuranceDesc')}</p>
       </div>
 
       <Card className="p-5">
@@ -79,9 +81,9 @@ export default function SubsidyInsuranceNavigator() {
         </div>
       </Card>
 
-      {schemes.length > 0 && <div className="grid gap-4 lg:grid-cols-2">{schemes.map((scheme) => <Card key={scheme.id} className="p-5"><div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2"><p className="text-xs uppercase tracking-wide text-emerald-600">{scheme.provider}</p><span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{scheme.region_specificity}</span></div><h3 className="mt-1 font-semibold text-foreground">{scheme.name}</h3></div><a className="text-muted-foreground hover:text-foreground" href={scheme.source_url} target="_blank" rel="noreferrer" title="Open official source"><ExternalLink className="h-4 w-4" /></a></div><p className="mt-3 text-sm text-foreground">{scheme.subsidy_details}</p><p className="mt-2 text-xs text-muted-foreground">Eligibility: {scheme.eligibility_criteria}</p><p className="mt-2 text-xs text-muted-foreground">Window: {scheme.application_window}</p></Card>)}</div>}
+      {schemes.length > 0 && <div className="grid gap-4 lg:grid-cols-2">{schemes.map((scheme) => <Card key={scheme.id} className="p-5"><div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2"><p className="text-xs uppercase tracking-wide text-emerald-600">{scheme.provider}</p><span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{scheme.region_specificity}</span></div><h3 className="mt-1 font-semibold text-foreground">{scheme.name}</h3></div><a className="text-muted-foreground hover:text-foreground" href={scheme.source_url} target="_blank" rel="noreferrer" title="Open official source"><ExternalLink className="h-4 w-4" /></a></div><p className="mt-3 text-sm text-foreground">{scheme.subsidy_details}</p><p className="mt-2 text-xs text-muted-foreground">{t('eligibilityLabel')} {scheme.eligibility_criteria}</p><p className="mt-2 text-xs text-muted-foreground">{t('windowLabel')} {scheme.application_window}</p></Card>)}</div>}
 
-      <Card className="p-5"><div className="flex items-center gap-2"><FileText className="h-4 w-4 text-emerald-600" /><h3 className="font-semibold text-foreground">Subsidy Advisor</h3></div><div className="mt-3 flex gap-2"><Input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Do I qualify for the replanting scheme?" onKeyDown={(event) => event.key === 'Enter' && askAdvisor()} /><Button onClick={askAdvisor} disabled={!question.trim()} aria-label="Ask subsidy advisor"><Send className="h-4 w-4" /></Button></div>{answer && <p className="mt-4 rounded-md bg-muted p-3 text-sm text-foreground">{answer}</p>}</Card>
+      <Card className="p-5"><div className="flex items-center gap-2"><FileText className="h-4 w-4 text-emerald-600" /><h3 className="font-semibold text-foreground">{t('subsidyAdvisor')}</h3></div><div className="mt-3 flex gap-2"><Input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Do I qualify for the replanting scheme?" onKeyDown={(event) => event.key === 'Enter' && askAdvisor()} /><Button onClick={askAdvisor} disabled={!question.trim()} aria-label="Ask subsidy advisor"><Send className="h-4 w-4" /></Button></div>{answer && <p className="mt-4 rounded-md bg-muted p-3 text-sm text-foreground">{answer}</p>}</Card>
 
       <Card className="flex items-center justify-between gap-4 p-5"><div><h3 className="font-semibold text-foreground">Insurance Evidence Dossier</h3><p className="mt-1 text-xs text-muted-foreground">Compile the last 90 days of satellite and sensor evidence for a private insurer or claims assessor.</p></div><Button variant="outline" onClick={downloadDossier} className="shrink-0 gap-2"><FileText className="h-4 w-4" />Download PDF</Button></Card>
 

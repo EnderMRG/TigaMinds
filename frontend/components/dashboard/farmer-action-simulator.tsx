@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from '@/context/LanguageContext';
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,7 @@ type SellingSuggestion = {
 };
 
 export default function FarmerActionSimulator() {
+  const { t } = useLanguage();
   const [decision, setDecision] = useState<'pending' | 'proceed' | 'modify' | 'skip'>('pending');
   const [simulationData, setSimulationData] = useState<SimulationData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -484,7 +486,7 @@ export default function FarmerActionSimulator() {
   if (loading) {
     return (
       <div className="p-10 text-muted-foreground text-center">
-        Running farmer action simulation…
+        {t('runningFarmerSimulation')}
       </div>
     );
   }
@@ -505,14 +507,14 @@ export default function FarmerActionSimulator() {
     <div className="space-y-6">
       {/* Header with Context */}
       <div>
-        <h2 className="text-3xl font-bold text-foreground">Farmer Action Simulator</h2>
-        <p className="text-muted-foreground mt-2">Simulate outcomes before taking action</p>
+        <h2 className="text-3xl font-bold text-foreground">{t('farmerActionSimTitle')}</h2>
+        <p className="text-muted-foreground mt-2">{t('simulateOutcomesDesc')}</p>
         <div className="mt-4 p-4 bg-muted rounded-lg">
-          <p className="text-sm font-medium text-foreground mb-2">Based on:</p>
+          <p className="text-sm font-medium text-foreground mb-2">{t('basedOn')}</p>
           <ul className="space-y-1 text-sm text-muted-foreground">
-            <li>• Leaf Quality: {simulationData.leafQuality}</li>
-            <li>• Crop Stage: Mid-growth</li>
-            <li>• Market Trend: Rising demand</li>
+            <li>• {t('leafQualityLabel')} {simulationData.leafQuality}</li>
+            <li>• {t('cropStageLabel')} {t('midGrowth')}</li>
+            <li>• {t('marketTrendLabel')} {t('risingDemand')}</li>
           </ul>
         </div>
       </div>
@@ -524,13 +526,13 @@ export default function FarmerActionSimulator() {
         <div className="flex items-start gap-4">
           <BarChart3 className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
           <div className="flex-1">
-            <h3 className="font-bold text-foreground text-lg mb-3">Yield Analysis and Selling Strategy</h3>
-            <p className="text-sm text-muted-foreground mb-4">Enter your total yield to get personalized selling recommendations based on real Guwahati market data</p>
+            <h3 className="font-bold text-foreground text-lg mb-3">{t('yieldAnalysisStrategy')}</h3>
+            <p className="text-sm text-muted-foreground mb-4">{t('enterYieldDesc')}</p>
 
             <div className="flex flex-col gap-4 mb-6">
               <div className="flex flex-col md:flex-row gap-3">
                 <div className="flex-1">
-                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">Origin Location</label>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">{t('originLocation')}</label>
                   <input
                     type="text"
                     value="Tea Garden (Jorhat)"
@@ -539,7 +541,7 @@ export default function FarmerActionSimulator() {
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">Destination Auction Center</label>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">{t('destinationAuctionCenter')}</label>
                   <select
                     value={selectedDest}
                     onChange={(e) => setSelectedDest(e.target.value)}
@@ -550,10 +552,10 @@ export default function FarmerActionSimulator() {
                     ))}
                     {centers.length === 0 && (
                       <>
-                        <option value="guwahati">Guwahati Tea Auction Centre</option>
-                        <option value="siliguri">Siliguri Tea Auction Centre</option>
-                        <option value="kolkata">Kolkata Tea Auction Centre</option>
-                        <option value="jorhat">Jorhat Tea Auction Centre</option>
+                        <option value="guwahati">{t('guwahatiAuctionCenter')}</option>
+                        <option value="siliguri">{t('siliguriAuctionCenter')}</option>
+                        <option value="kolkata">{t('kolkataAuctionCenter')}</option>
+                        <option value="jorhat">{t('jorhatAuctionCenter')}</option>
                       </>
                     )}
                   </select>
@@ -561,12 +563,12 @@ export default function FarmerActionSimulator() {
               </div>
               <div className="flex flex-col md:flex-row gap-3 items-end">
                 <div className="flex-1">
-                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">Yield (kg)</label>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">{t('yieldKg')}</label>
                   <input
                     type="number"
                     value={yieldInput}
                     onChange={(e) => setYieldInput(e.target.value)}
-                    placeholder="Enter yield in kg (e.g., 1000)"
+                    placeholder={t('enterYieldPlaceholder')}
                     className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -574,14 +576,14 @@ export default function FarmerActionSimulator() {
                   onClick={generateYieldSuggestions}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground py-2 h-[42px]"
                 >
-                  Analyze Yield
+                  {t('analyzeYield')}
                 </Button>
               </div>
             </div>
 
             {showYieldAnalysis && sellingSuggestions.length > 0 && (
               <div className="space-y-4">
-                <h4 className="font-semibold text-foreground mb-3">3 Selling & Improvement Approaches:</h4>
+                <h4 className="font-semibold text-foreground mb-3">{t('threeSellingApproaches')}</h4>
                 {sellingSuggestions.map((suggestion, i) => (
                   <div
                     key={i}
@@ -613,11 +615,11 @@ export default function FarmerActionSimulator() {
                     <p className="text-sm text-muted-foreground mb-3">{suggestion.description}</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="p-2 bg-muted rounded">
-                        <p className="text-xs text-muted-foreground">Expected Revenue</p>
+                        <p className="text-xs text-muted-foreground">{t('expectedRevenue')}</p>
                         <p className="text-lg font-bold text-green-600 dark:text-green-400">{suggestion.expectedRevenue}</p>
                       </div>
                       <div className="p-2 bg-muted rounded">
-                        <p className="text-xs text-muted-foreground">Timing</p>
+                        <p className="text-xs text-muted-foreground">{t('timing')}</p>
                         <p className="text-sm font-semibold text-foreground">{suggestion.timing}</p>
                       </div>
                     </div>
@@ -626,10 +628,10 @@ export default function FarmerActionSimulator() {
 
                 <div className="mt-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
                   <p className="text-sm font-semibold text-foreground mb-2">
-                    ✓ Selected Approach: {sellingSuggestions[selectedApproach]?.title}
+                    ✓ {t('selectedApproach')}: {sellingSuggestions[selectedApproach]?.title}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    All cards above update in real-time based on your selection. This will be included in your downloadable PDF report.
+                    {t('realtimeCardsUpdate')}
                   </p>
                 </div>
               </div>
@@ -653,7 +655,7 @@ export default function FarmerActionSimulator() {
                 <AlertCircle className="h-4 w-4" />
               </div>
               <div>
-                <p className="font-bold text-foreground">Logistics & Route Analysis</p>
+                <p className="font-bold text-foreground">{t('logisticsRouteAnalysis')}</p>
                 <p className="text-xs text-muted-foreground">To {routeData.destination_name} ({routeData.distance_km} km)</p>
               </div>
             </div>
@@ -662,7 +664,7 @@ export default function FarmerActionSimulator() {
               routeData.route_risk === 'MEDIUM' ? 'bg-amber-500/10 text-amber-500 border-amber-200' : 
               'bg-emerald-500/10 text-emerald-500 border-emerald-200'
             }`}>
-              {routeData.route_risk} RISK
+              {routeData.route_risk} {t('riskSuffix')}
             </div>
           </div>
 
@@ -683,14 +685,14 @@ export default function FarmerActionSimulator() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Route Details */}
               <div className="space-y-4">
-                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Route Diagnostics</h4>
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('routeDiagnostics')}</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">Distance</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('distance')}</p>
                     <p className="text-lg font-bold text-foreground">{routeData.distance_km} km</p>
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">Estimated Duration</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('estimatedDuration')}</p>
                     <p className="text-lg font-bold text-foreground">
                       {routeData.duration_min ? `${Math.floor(routeData.duration_min / 60)}h ${Math.round(routeData.duration_min % 60)}m` : 'N/A'}
                     </p>
@@ -702,7 +704,7 @@ export default function FarmerActionSimulator() {
                   'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 text-emerald-800 dark:text-emerald-300'
                 }`}>
                   <p className="text-xs font-bold uppercase mb-1 flex items-center gap-2">
-                    <AlertTriangle className="h-3 w-3" /> Route Advisory
+                    <AlertTriangle className="h-3 w-3" /> {t('routeAdvisory')}
                   </p>
                   <p className="text-sm">
                     {routeData.route_risk === 'HIGH' ? 'Severe weather or infrastructure issues detected on this route. Expect high transit spoilage.' :
@@ -714,7 +716,7 @@ export default function FarmerActionSimulator() {
 
               {/* Financials Breakdown */}
               <div className="space-y-4">
-                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Effective Price Calculation</h4>
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('effectivePriceCalculation')}</h4>
                 {(() => {
                   const selectedPrice = sellingSuggestions[selectedApproach]?.price_per_kg || routeData.base_price || 0;
                   const spoilage = routeData.spoilage_pct;
@@ -723,16 +725,16 @@ export default function FarmerActionSimulator() {
                   return (
                     <div className="bg-muted/30 border rounded-lg p-4 space-y-3">
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground">Selected Approach Base Price</span>
+                        <span className="text-muted-foreground">{t('selectedBasePrice')}</span>
                         <span className="font-medium text-foreground">₹{selectedPrice.toFixed(2)}/kg</span>
                       </div>
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-red-500 dark:text-red-400">Transit Spoilage Deduction ({spoilage}%)</span>
+                        <span className="text-red-500 dark:text-red-400">{t('transitSpoilageDeduction')} ({spoilage}%)</span>
                         <span className="font-medium text-red-500 dark:text-red-400">-₹{(selectedPrice * (spoilage / 100)).toFixed(2)}/kg</span>
                       </div>
                       <div className="h-px bg-border w-full my-2"></div>
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-foreground">Realized Effective Price</span>
+                        <span className="font-bold text-foreground">{t('realizedEffectivePrice')}</span>
                         <span className="text-xl font-bold text-emerald-500 dark:text-emerald-400">₹{effectivePrice.toFixed(2)}<span className="text-sm text-emerald-500/70">/kg</span></span>
                       </div>
                     </div>
@@ -752,19 +754,19 @@ export default function FarmerActionSimulator() {
             <div className="flex items-start gap-4">
               <Zap className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
               <div className="w-full">
-                <h3 className="font-bold text-foreground text-lg mb-3">Unified Action Plan</h3>
-                <p className="text-sm text-muted-foreground mb-4">Correlated strategy based on your {yieldInput}kg yield, destination ({routeData?.destination_name || selectedDest}), and current environmental conditions.</p>
+                <h3 className="font-bold text-foreground text-lg mb-3">{t('unifiedActionPlan')}</h3>
+                <p className="text-sm text-muted-foreground mb-4">{t('correlatedStrategy')}</p>
                 
                 <div className="space-y-6">
                   {/* Logistics & Yield Strategy */}
                   <div>
-                    <h4 className="text-sm font-bold text-foreground uppercase tracking-wider mb-3">1. Logistics & Yield Strategy</h4>
+                    <h4 className="text-sm font-bold text-foreground uppercase tracking-wider mb-3">{t('logisticsYieldStrategy')}</h4>
                     <ul className="space-y-3 text-foreground">
                       <li className="flex items-start gap-3">
                         <BarChart3 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                         <div>
                           <span className="font-medium">Selected Approach: {sellingSuggestions[selectedApproach]?.title || 'Select an approach'}</span>
-                          <p className="text-sm text-muted-foreground mt-1">Execute this market approach to maximize revenue.</p>
+                          <p className="text-sm text-muted-foreground mt-1">{t('executeMarketApproach')}</p>
                         </div>
                       </li>
                       {routeData && (
@@ -789,7 +791,7 @@ export default function FarmerActionSimulator() {
 
                   {/* Environmental & Crop Strategy */}
                   <div>
-                    <h4 className="text-sm font-bold text-foreground uppercase tracking-wider mb-3">2. Environmental & Crop Strategy</h4>
+                    <h4 className="text-sm font-bold text-foreground uppercase tracking-wider mb-3">{t('environmentalCropStrategy')}</h4>
                     <ul className="space-y-3 text-foreground">
                       {simulationData.recommendedActions.map((action, i) => (
                         <li key={i} className="flex items-start gap-3">
@@ -810,8 +812,8 @@ export default function FarmerActionSimulator() {
               <div className="flex items-start gap-4">
                 <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-1" />
                 <div className="flex-1">
-                  <h3 className="font-bold text-foreground text-lg mb-3">Disease Prevention Approaches (Last 7 Days Data)</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Based on 7 days of sensor and leaf scan data, here are 3 approaches to prevent and cure diseases:</p>
+                  <h3 className="font-bold text-foreground text-lg mb-3">{t('diseasePreventionApproachesTitle')}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">{t('diseasePreventionDesc')}</p>
                   <div className="space-y-4">
                     {simulationData.diseasePreventionApproaches.map((approach, i) => (
                       <div key={i} className="p-4 bg-white dark:bg-background rounded-lg border border-orange-200 dark:border-orange-900/50">
@@ -833,37 +835,37 @@ export default function FarmerActionSimulator() {
           <Card className="p-8 border-2 border-primary/50 bg-gradient-to-br from-primary/5 via-background to-background">
             <div className="mb-2 flex items-center gap-2">
               <TrendingUp className="h-6 w-6 text-primary" />
-              <h3 className="font-bold text-foreground text-2xl">If You Follow This Action</h3>
+              <h3 className="font-bold text-foreground text-2xl">{t('ifYouFollowThisAction')}</h3>
             </div>
-            <p className="text-muted-foreground mb-6">Projected outcome based on AI analysis</p>
+            <p className="text-muted-foreground mb-6">{t('projectedOutcomeAi')}</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                <p className="text-sm text-muted-foreground mb-1">Expected Yield Change</p>
+                <p className="text-sm text-muted-foreground mb-1">{t('expectedYieldChange')}</p>
                 <p className="text-3xl font-bold text-green-600 dark:text-green-400">{simulationData.projectedOutcomes.yieldChange}</p>
-                <p className="text-xs text-muted-foreground mt-2">~1,500 to 1,800 kg additional yield</p>
+                <p className="text-xs text-muted-foreground mt-2">{t('additionalYieldEst')}</p>
               </div>
 
               <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                <p className="text-sm text-muted-foreground mb-1">Estimated Profit Change</p>
+                <p className="text-sm text-muted-foreground mb-1">{t('estimatedProfitChange')}</p>
                 <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{simulationData.projectedOutcomes.profitChange}</p>
-                <p className="text-xs text-muted-foreground mt-2">Based on current market rates</p>
+                <p className="text-xs text-muted-foreground mt-2">{t('basedOnCurrentRates')}</p>
               </div>
 
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-muted-foreground mb-1">Risk Level</p>
+                <p className="text-sm text-muted-foreground mb-1">{t('riskLevelLabel')}</p>
                 <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                   {simulationData.projectedOutcomes.riskLevel}
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Probability based on current conditions
+                  {t('probBasedOnConditions')}
                 </p>
               </div>
 
               <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                <p className="text-sm text-muted-foreground mb-1">Harvest Timing</p>
+                <p className="text-sm text-muted-foreground mb-1">{t('harvestTiming')}</p>
                 <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{simulationData.projectedOutcomes.harvestTiming}</p>
-                <p className="text-xs text-muted-foreground mt-2">Aligns with market peak</p>
+                <p className="text-xs text-muted-foreground mt-2">{t('alignsWithMarketPeak')}</p>
               </div>
             </div>
           </Card>
@@ -873,18 +875,18 @@ export default function FarmerActionSimulator() {
             <div className="flex items-start gap-4">
               <TrendingDown className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-1" />
               <div className="flex-1">
-                <h3 className="font-bold text-foreground text-lg mb-4">If No Action Is Taken</h3>
+                <h3 className="font-bold text-foreground text-lg mb-4">{t('ifNoActionTaken')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">Yield Change</p>
+                    <p className="text-sm text-muted-foreground mb-2">{t('yieldChange')}</p>
                     <p className="text-2xl font-bold text-red-600 dark:text-red-400">{simulationData.noActionOutcomes.yieldChange}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">Profit Change</p>
+                    <p className="text-sm text-muted-foreground mb-2">{t('profitChange')}</p>
                     <p className="text-2xl font-bold text-red-600 dark:text-red-400">{simulationData.noActionOutcomes.profitChange}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">Risk Level</p>
+                    <p className="text-sm text-muted-foreground mb-2">{t('riskLevelLabel')}</p>
                     <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{simulationData.noActionOutcomes.riskLevel}</p>
                   </div>
                 </div>
@@ -897,16 +899,16 @@ export default function FarmerActionSimulator() {
             <div className="flex items-start gap-4">
               <BarChart3 className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
               <div className="flex-1">
-                <h3 className="font-bold text-foreground text-lg mb-4">Market Timing Insight</h3>
+                <h3 className="font-bold text-foreground text-lg mb-4">{t('marketTimingInsight')}</h3>
                 <div className="space-y-3">
                   <p className="text-foreground">
-                    <span className="font-semibold">Demand Forecast:</span> {simulationData.marketInsights.demandForecast} <span className="text-green-600 dark:text-green-400">↑</span>
+                    <span className="font-semibold">{t('demandForecastLabel')}</span> {simulationData.marketInsights.demandForecast} <span className="text-green-600 dark:text-green-400">↑</span>
                   </p>
                   <p className="text-foreground">
-                    <span className="font-semibold">Price Change:</span> {simulationData.marketInsights.priceIncrease}
+                    <span className="font-semibold">{t('priceChangeLabel')}</span> {simulationData.marketInsights.priceIncrease}
                   </p>
                   <p className="text-foreground">
-                    <span className="font-semibold">Best Selling Window:</span> {simulationData.marketInsights.sellingWindow}
+                    <span className="font-semibold">{t('bestSellingWindowLabel')}</span> {simulationData.marketInsights.sellingWindow}
                   </p>
                 </div>
               </div>
@@ -915,11 +917,11 @@ export default function FarmerActionSimulator() {
 
           {/* Confidence & Reliability */}
           <Card className="p-6 bg-muted/50">
-            <h3 className="font-bold text-foreground mb-4">Simulation Confidence</h3>
+            <h3 className="font-bold text-foreground mb-4">{t('simulationConfidence')}</h3>
             <div className="space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-foreground">Model Accuracy</p>
+                  <p className="text-sm font-medium text-foreground">{t('modelAccuracy')}</p>
                   <span className="text-sm font-bold text-primary">{simulationData.confidence.modelAccuracy}%</span>
                 </div>
                 <div className="w-full bg-border rounded-full h-2">
@@ -929,7 +931,7 @@ export default function FarmerActionSimulator() {
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-foreground">Market Data Reliability</p>
+                  <p className="text-sm font-medium text-foreground">{t('marketDataReliability')}</p>
                   <span className="text-sm font-bold text-primary">{simulationData.confidence.marketReliability}%</span>
                 </div>
                 <div className="w-full bg-border rounded-full h-2">
@@ -939,7 +941,7 @@ export default function FarmerActionSimulator() {
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-foreground">Historical Trend Similarity</p>
+                  <p className="text-sm font-medium text-foreground">{t('historicalTrendSimilarity')}</p>
                   <span className="text-sm font-bold text-primary">{simulationData.confidence.historicalSimilarity}%</span>
                 </div>
                 <div className="w-full bg-border rounded-full h-2">
@@ -949,7 +951,7 @@ export default function FarmerActionSimulator() {
 
               <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
                 <p className="text-sm text-foreground">
-                  <span className="font-semibold">Overall Confidence: </span>
+                  <span className="font-semibold">{t('overallConfidence')} </span>
                   <span className="text-primary font-bold">
                     {Math.round((simulationData.confidence.modelAccuracy + simulationData.confidence.marketReliability + simulationData.confidence.historicalSimilarity) / 3) >= 85 ? 'High' :
                       Math.round((simulationData.confidence.modelAccuracy + simulationData.confidence.marketReliability + simulationData.confidence.historicalSimilarity) / 3) >= 70 ? 'Medium' : 'Low'}
@@ -965,7 +967,7 @@ export default function FarmerActionSimulator() {
             <div className="flex items-start gap-4">
               <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-1" />
               <div className="flex-1">
-                <h3 className="font-bold text-foreground text-lg mb-4">Risk Factors</h3>
+                <h3 className="font-bold text-foreground text-lg mb-4">{t('riskFactors')}</h3>
                 {simulationData.riskFactors && simulationData.riskFactors.length > 0 ? (
                   <ul className="space-y-3">
                     {simulationData.riskFactors.map((risk, index) => (
@@ -990,7 +992,7 @@ export default function FarmerActionSimulator() {
                 ) : (
                   <ul className="space-y-2">
                     <li className="text-foreground">
-                      <span className="font-semibold">General Market Risk:</span> Enter yield amount above to see specific risk factors for your situation
+                      <span className="font-semibold">{t('generalMarketRisk')}</span> Enter yield amount above to see specific risk factors for your situation
                     </li>
                   </ul>
                 )}
@@ -1003,9 +1005,9 @@ export default function FarmerActionSimulator() {
       {/* Download PDF */}
       <Card className="p-8 border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-background to-background">
         <div className="text-center mb-6">
-          <h3 className="font-bold text-foreground text-2xl mb-2">Download Your Action Plan</h3>
+          <h3 className="font-bold text-foreground text-2xl mb-2">{t('downloadYourActionPlan')}</h3>
           <p className="text-muted-foreground text-sm">
-            Save this comprehensive analysis as a PDF report for your records
+            {t('savePdfDesc')}
           </p>
         </div>
 
@@ -1016,7 +1018,7 @@ export default function FarmerActionSimulator() {
             className="bg-primary hover:bg-primary/90 text-primary-foreground h-14 px-8 text-base font-semibold rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="h-5 w-5 mr-2" />
-            {loading ? 'Generating PDF...' : 'Download PDF Report'}
+            {loading ? t('generatingPdf') : t('downloadPdfReport')}
           </Button>
         </div>
 
@@ -1028,7 +1030,7 @@ export default function FarmerActionSimulator() {
 
         <div className="mt-6 p-4 bg-muted/50 rounded-lg">
           <p className="text-xs text-center text-muted-foreground">
-            The PDF includes all recommendations, market insights, yield analysis, disease prevention approaches, and risk factors
+            {t('pdfIncludesDesc')}
           </p>
         </div>
       </Card>

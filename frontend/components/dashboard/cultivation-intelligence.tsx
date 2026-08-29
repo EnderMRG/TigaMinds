@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/context/LanguageContext';
 import {
   LineChart,
   Line,
@@ -71,6 +72,7 @@ const statusStyles = {
 
 
 export default function CultivationIntelligence() {
+  const { t } = useLanguage();
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [diseaseForecast, setDiseaseForecast] = useState<any>(null);
@@ -419,7 +421,7 @@ export default function CultivationIntelligence() {
       {/* Header with Mode Toggle */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Cultivation Intelligence</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t('cultivationIntelligence')}</h2>
           <p className="text-muted-foreground mt-1">
             {mode === 'iot' ? 'Real-time IoT monitoring and environmental analytics' : 'Manual data entry mode'}
           </p>
@@ -430,17 +432,13 @@ export default function CultivationIntelligence() {
             variant={mode === 'iot' ? 'default' : 'outline'}
             className="gap-2"
           >
-            <Wifi className="h-4 w-4" />
-            IoT Mode
-          </Button>
+            <Wifi className="h-4 w-4" />{t('iotMode')}</Button>
           <Button
             onClick={() => setMode('manual')}
             variant={mode === 'manual' ? 'default' : 'outline'}
             className="gap-2"
           >
-            <PenTool className="h-4 w-4" />
-            Manual Entry
-          </Button>
+            <PenTool className="h-4 w-4" />{t('manualEntry')}</Button>
         </div>
       </div>
 
@@ -452,11 +450,11 @@ export default function CultivationIntelligence() {
                 <div>
                   <div className="flex items-center gap-2">
                     <ShieldAlert className="h-5 w-5 text-emerald-600" />
-                    <h3 className="font-semibold text-foreground">Disease Risk Forecast</h3>
+                    <h3 className="font-semibold text-foreground">{t('diseaseRiskForecast')}</h3>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">Environmental precursor model, 5–10 days ahead · {diseaseForecast.source === 'live_iot' ? 'Live IoT data' : 'Illustrative demo data'}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t('envPrecursorModel')} · {diseaseForecast.source === 'live_iot' ? t('liveIotData') : 'Illustrative demo data'}</p>
                 </div>
-                <span className="text-xs text-muted-foreground">Zone: {diseaseForecast.zone_id}</span>
+                <span className="text-xs text-muted-foreground">{t('zone')}: {diseaseForecast.zone_id}</span>
               </div>
               <div className="mt-4 grid gap-3 lg:grid-cols-3">
                 {diseaseForecast.forecasts.map((forecast: any) => {
@@ -470,8 +468,8 @@ export default function CultivationIntelligence() {
                       </div>
                       <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full ${forecast.risk_level === 'High' ? 'bg-red-500' : forecast.risk_level === 'Moderate' ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${forecast.risk_score}%` }} /></div>
                       <p className="mt-2 text-xs text-muted-foreground">{forecast.risk_score}/100 · {forecast.trigger}</p>
-                      {forecast.estimated_days_to_outbreak && <p className="mt-1 text-xs font-medium text-foreground">Potential outbreak window: {forecast.estimated_days_to_outbreak} days</p>}
-                      {forecast.risk_level === 'High' && <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-300">Action: {forecast.preventive_action}</p>}
+                      {forecast.estimated_days_to_outbreak && <p className="mt-1 text-xs font-medium text-foreground">{t('potentialOutbreakWindow')}: {forecast.estimated_days_to_outbreak} {t('days')}</p>}
+                      {forecast.risk_level === 'High' && <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-300">{t('action')}: {forecast.preventive_action}</p>}
                     </div>
                   );
                 })}
@@ -493,14 +491,14 @@ export default function CultivationIntelligence() {
               <div>
                 <h4 className="font-semibold">
                   {smartAlert.alert
-                    ? 'Smart Crop Stress Alert'
-                    : 'Crop Conditions Stable'}
+                    ? t('smartCropStressAlert')
+                    : t('cropConditionsStable')}
                 </h4>
 
                 <p className="text-sm">
                   {smartAlert.alert
-                    ? `Risk Score: ${smartAlert.risk_score}/100`
-                    : 'No critical stress detected by AI'}
+                    ? `${t('riskScore')}: ${smartAlert.risk_score}/100`
+                    : t('noCriticalStress')}
                 </p>
               </div>
             </div>
@@ -514,7 +512,7 @@ export default function CultivationIntelligence() {
               {
                 key: 'soil_moisture',
                 icon: Droplet,
-                label: 'Avg Soil Moisture',
+                label: t('avgSoilMoisture'),
                 value: averages.soil_moisture,
                 unit: '%',
                 color: 'text-blue-600 dark:text-blue-400',
@@ -522,7 +520,7 @@ export default function CultivationIntelligence() {
               {
                 key: 'temperature',
                 icon: Thermometer,
-                label: 'Avg Temperature',
+                label: t('avgTemperature'),
                 value: averages.temperature,
                 unit: '°C',
                 color: 'text-red-600 dark:text-red-400',
@@ -530,7 +528,7 @@ export default function CultivationIntelligence() {
               {
                 key: 'humidity',
                 icon: Wind,
-                label: 'Avg Humidity',
+                label: t('avgHumidity'),
                 value: averages.humidity,
                 unit: '%',
                 color: 'text-cyan-600 dark:text-cyan-400',
@@ -538,7 +536,7 @@ export default function CultivationIntelligence() {
               {
                 key: 'rainfall_7d',
                 icon: CloudRain,
-                label: 'Avg Rainfall (Last 7 Days)',
+                label: t('avgRainfallLast7Days'),
                 value: averages.rainfall_7d,
                 unit: 'mm',
                 color: 'text-indigo-600 dark:text-indigo-400',
@@ -585,7 +583,7 @@ export default function CultivationIntelligence() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Moisture Levels */}
             <Card className="p-6">
-              <h3 className="font-semibold text-foreground mb-4">Soil Moisture Over Time (Last 24h) Vs Optimal</h3>
+              <h3 className="font-semibold text-foreground mb-4">{t('soilMoistureOverTime')}</h3>
               <ResponsiveContainer width="100%" height={250}>
                 <AreaChart data={soilMoistureSeries}                >
                   <defs>
@@ -633,9 +631,7 @@ export default function CultivationIntelligence() {
 
             {/* Temperature Comparison */}
             <Card className="p-6">
-              <h3 className="font-semibold text-foreground mb-4">
-                Temperature Over Time (Last 24h) vs Optimal
-              </h3>
+              <h3 className="font-semibold text-foreground mb-4">{t('temperatureOverTime')}</h3>
 
               <ResponsiveContainer width="100%" height={250}>
                 <AreaChart
@@ -705,7 +701,7 @@ export default function CultivationIntelligence() {
             {/* Weekly Environmental Data */}
             <Card className="p-6 lg:col-span-2">
               <h3 className="font-semibold text-foreground mb-4">
-                Environmental Metrics — Last 7 Days
+                {t('envMetricsLast7Days')}
               </h3>
 
               <ResponsiveContainer width="100%" height={280}>
@@ -733,29 +729,27 @@ export default function CultivationIntelligence() {
           </div>
           {result && (
             <Card className="p-6 border-green-300 bg-green-50 rounded-xl">
-              <h3 className="font-semibold text-foreground mb-4">
-                Live Cultivation Intelligence (IoT)
-              </h3>
+              <h3 className="font-semibold text-foreground mb-4">{t('liveCultivationIntelligence')}</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Health Score</p>
+                  <p className="text-sm text-muted-foreground">{t('healthScore')}</p>
                   <p className="text-2xl font-bold">{result.health_score}/100</p>
                 </div>
 
                 <div>
-                  <p className="text-sm text-muted-foreground">Drought Risk</p>
+                  <p className="text-sm text-muted-foreground">{t('droughtRisk')}</p>
                   <p className="font-semibold">{result.drought_risk}</p>
                 </div>
 
                 <div>
-                  <p className="text-sm text-muted-foreground">Pest Risk</p>
+                  <p className="text-sm text-muted-foreground">{t('pestRisk')}</p>
                   <p className="font-semibold">{result.pest_risk}</p>
                 </div>
               </div>
 
               <div className="mt-4">
-                <p className="text-sm text-muted-foreground">Recommended Action</p>
+                <p className="text-sm text-muted-foreground">{t('recommendedAction')}</p>
                 <p className="font-medium">{result.action}</p>
               </div>
             </Card>
@@ -771,12 +765,12 @@ export default function CultivationIntelligence() {
         <>
           {/* Manual Entry Form */}
           <Card className="p-6">
-            <h3 className="font-semibold text-foreground mb-6">Enter Environmental Data</h3>
+            <h3 className="font-semibold text-foreground mb-6">{t('enterEnvironmentalData')}</h3>
             <div className="space-y-4">
               {/* Input Fields Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Soil Moisture (%)</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">{t('soilMoisture')} (%)</label>
                   <input
                     type="number"
                     placeholder="Enter value (0-100)"
@@ -787,7 +781,7 @@ export default function CultivationIntelligence() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Temperature (°C)</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">{t('temperature')} (°C)</label>
                   <input
                     type="number"
                     placeholder="Enter value"
@@ -798,7 +792,7 @@ export default function CultivationIntelligence() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Humidity (%)</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">{t('humidity')} (%)</label>
                   <input
                     type="number"
                     placeholder="Enter value (0-100)"
@@ -810,7 +804,7 @@ export default function CultivationIntelligence() {
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Rainfall (Last 7 Days, mm)
+                    {t('rainfall')} ({t('last7Days')}, mm)
                   </label>
                   <input
                     type="number"
@@ -829,7 +823,7 @@ export default function CultivationIntelligence() {
                   onClick={submitManualData}
                   disabled={loading}
                 >
-                  {loading ? 'Analyzing...' : 'Analyze Field Data'}
+                  {loading ? t('analyzingConditions') : t('analyzeConditions')}
                 </Button>
 
                 <Button
@@ -845,28 +839,26 @@ export default function CultivationIntelligence() {
                   }
                   className="flex-1"
                 >
-                  Clear Form
+                  {t('clearForm')}
                 </Button>
               </div>
             </div>
           </Card>
           {result && (
             <Card className="p-6 border-green-300 bg-green-50 mt-6 rounded-xl">
-              <h3 className="font-semibold text-foreground mb-4">
-                Cultivation Intelligence Result
-              </h3>
+              <h3 className="font-semibold text-foreground mb-4">{t('cultivationIntelligenceResult')}</h3>
 
               {/* Top summary */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Health Score</p>
+                  <p className="text-sm text-muted-foreground">{t('healthScore')}</p>
                   <p className="text-2xl font-bold text-foreground">
                     {result.health_score}/100
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-sm text-muted-foreground">Drought Risk</p>
+                  <p className="text-sm text-muted-foreground">{t('droughtRisk')}</p>
                   <p
                     className={`font-semibold ${result.drought_risk === 'High'
                       ? 'text-red-600'
@@ -880,7 +872,7 @@ export default function CultivationIntelligence() {
                 </div>
 
                 <div>
-                  <p className="text-sm text-muted-foreground">Pest Risk</p>
+                  <p className="text-sm text-muted-foreground">{t('pestRisk')}</p>
                   <p
                     className={`font-semibold ${result.pest_risk === 'High'
                       ? 'text-red-600'
@@ -896,7 +888,7 @@ export default function CultivationIntelligence() {
 
               {/* Action */}
               <div className="mt-4">
-                <p className="text-sm text-muted-foreground">Recommended Action</p>
+                <p className="text-sm text-muted-foreground">{t('recommendedAction')}</p>
                 <p className="font-medium text-foreground">{result.action}</p>
               </div>
 
@@ -907,7 +899,7 @@ export default function CultivationIntelligence() {
               {result.score_explanation && (
                 <div>
                   <p className="text-sm font-semibold text-foreground mb-3">
-                    Health Score Breakdown
+                    {t('healthScoreBreakdown')}
                   </p>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -946,9 +938,7 @@ export default function CultivationIntelligence() {
       <Card className="p-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
         <div className="flex items-center gap-2 mb-4">
           <Lightbulb className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-foreground text-lg">
-            AI Recommendations
-          </h3>
+          <h3 className="font-semibold text-foreground text-lg">{t('aiRecommendations')}</h3>
         </div>
 
         {!result && (
@@ -986,7 +976,7 @@ export default function CultivationIntelligence() {
                   {rec.reason && (
                     <p className="mt-2 text-sm text-muted-foreground">
                       <span className="font-medium text-foreground">
-                        Why this matters:
+                        {t('whyThisMatters')}:
                       </span>{' '}
                       {rec.reason}
                     </p>

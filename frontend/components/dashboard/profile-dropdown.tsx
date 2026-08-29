@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from "@/context/LanguageContext";
 import { useState, useRef, useEffect } from 'react';
 import { LogOut, Settings, MonitorPlay } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -9,6 +10,7 @@ interface ProfileDropdownProps {
 }
 
 export default function ProfileDropdown({ onSettingsClick }: ProfileDropdownProps) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, logout, isDemoMode, toggleDemoMode } = useAuth();

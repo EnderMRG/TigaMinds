@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from "@/context/LanguageContext";
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { Bell, Send, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 
 export default function WorkerAlerts() {
+  const { t } = useLanguage();
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
   const [bulkPhones, setBulkPhones] = useState('');

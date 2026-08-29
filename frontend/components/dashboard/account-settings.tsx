@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { User, Lock, Shield, LogOut, Save, X, Eye, EyeOff, Check, Bell } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function AccountSettings() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -242,7 +244,7 @@ export default function AccountSettings() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Account Settings</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t('accountSettings')}</h2>
         <p className="text-muted-foreground mt-1">Manage your profile, security, and preferences</p>
       </div>
 
@@ -373,7 +375,7 @@ export default function AccountSettings() {
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Current Password</label>
+                <label className="block text-sm font-medium text-foreground mb-2">{t('currentPassword')}</label>
                 <div className="relative">
                   <input
                     type={showCurrentPassword ? 'text' : 'password'}
@@ -391,7 +393,7 @@ export default function AccountSettings() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">New Password</label>
+                <label className="block text-sm font-medium text-foreground mb-2">{t('newPassword')}</label>
                 <div className="relative">
                   <input
                     type={showNewPassword ? 'text' : 'password'}
@@ -441,9 +443,7 @@ export default function AccountSettings() {
                   onClick={() => setShowPasswordFields(false)}
                   variant="outline"
                   className="flex-1"
-                >
-                  Cancel
-                </Button>
+                >{t('cancel')}</Button>
               </div>
             </div>
           )}
@@ -562,9 +562,7 @@ export default function AccountSettings() {
               variant="outline"
               className="text-red-600 hover:text-red-700 border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2 bg-transparent"
             >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
+              <LogOut className="h-4 w-4" />{t('logout')}</Button>
           </div>
         </Card>
       )}

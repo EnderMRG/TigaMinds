@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/context/LanguageContext';
 import {
   BarChart,
   Bar,
@@ -113,6 +114,7 @@ const inferPriority = (text: string) => {
 
 
 export default function LeafQualityScanner() {
+  const { t } = useLanguage();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -235,7 +237,7 @@ export default function LeafQualityScanner() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Leaf Quality Scanner</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t('leafQualityScanner')}</h2>
         <p className="text-muted-foreground mt-1">
           AI-powered leaf analysis using Gemini Vision API for premium quality grading
         </p>
@@ -354,7 +356,7 @@ export default function LeafQualityScanner() {
 
 
         <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Quality Score</p>
+          <p className="text-sm text-muted-foreground">{t('qualityScore')}</p>
           <p className="text-2xl font-bold text-foreground mt-2">
             {qualityScore}
           </p>
@@ -417,7 +419,7 @@ export default function LeafQualityScanner() {
                     <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                       {Math.round(detection.confidence * 100)}%
                     </p>
-                    <p className="text-xs text-muted-foreground">Confidence</p>
+                    <p className="text-xs text-muted-foreground">{t('confidence')}</p>
                   </div>
                 </div>
 

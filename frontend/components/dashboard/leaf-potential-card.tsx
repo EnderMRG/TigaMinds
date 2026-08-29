@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/context/LanguageContext";
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ const gradeBg = (g: string) => {
 };
 
 export function LeafPotentialCard({ onDataLoaded }: { onDataLoaded?: (data: LeafPotentialResponse) => void }) {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const { addAlert } = useAlerts();
   const [leafData, setLeafData] = useState<LeafPotentialResponse | null>(null);

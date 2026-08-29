@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from "@/context/LanguageContext";
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Card } from '@/components/ui/card';
@@ -110,6 +111,7 @@ const DEMO_ORIGIN = { lat: 26.5714, lng: 93.8441, name: 'Tea Garden (Jorhat, Ass
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function RouteRealityEngine() {
+  const { t } = useLanguage();
   const [centers, setCenters] = useState<AuctionCenter[]>([]);
   const [selectedDest, setSelectedDest] = useState<string>('guwahati');
   const [customQuery, setCustomQuery] = useState('');

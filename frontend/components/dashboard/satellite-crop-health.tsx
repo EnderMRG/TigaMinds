@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api';
 import { useAlerts } from '@/context/alerts-context';
+import { useLanguage } from '@/context/LanguageContext';
 import {
   Satellite, AlertTriangle, CheckCircle2, Leaf, Droplets,
   Sun, RefreshCw, Info, Loader2, Zap, Activity
@@ -79,6 +80,7 @@ function NDVIBar({ value, label }: { value: number; label: string }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function SatelliteCropHealth() {
+  const { t } = useLanguage();
   const [drawnGeometry, setDrawnGeometry] = useState<any>(null);
   const [heatmapBounds, setHeatmapBounds] = useState<[[number, number], [number, number]] | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -177,7 +179,7 @@ export default function SatelliteCropHealth() {
             <Satellite className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-foreground">Satellite Crop Health Monitor</h2>
+            <h2 className="text-lg font-bold text-foreground">{t('satelliteCropHealth')}</h2>
             <p className="text-xs text-muted-foreground">Draw a field boundary → Sentinel-2 imagery → NDVI heatmap</p>
           </div>
         </div>
@@ -223,9 +225,9 @@ export default function SatelliteCropHealth() {
             <span className="text-xs text-muted-foreground">NDVI Scale:</span>
             <div className="flex-1 h-3 rounded-full" style={{ background: 'linear-gradient(to right, #d73027, #fc8d59, #fee08b, #d9ef8b, #91cf60, #1a9850)' }} />
             <div className="flex gap-4 text-xs text-muted-foreground">
-              <span>Stressed</span>
+              <span>{t('stressed')}</span>
               <span>Moderate</span>
-              <span>Healthy</span>
+              <span>{t('healthy')}</span>
             </div>
           </div>
         </Card>

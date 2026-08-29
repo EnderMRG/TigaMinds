@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -23,6 +24,7 @@ type Financials = {
 };
 
 export default function DigitalTwin() {
+  const { t } = useLanguage();
   const [forecastData, setForecastData] = useState<ForecastData[]>([]);
   const [summary, setSummary] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -66,9 +68,9 @@ export default function DigitalTwin() {
     <div className="h-[calc(100vh-120px)] flex flex-col space-y-4 animate-in fade-in duration-500 overflow-hidden">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Climate Resilience Digital Twin</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t('digitalTwin')}</h2>
           <p className="text-muted-foreground">
-            5-year forward simulation of NDVI crop health based on your management strategy.
+            {t('fiveYearSimDesc')}
           </p>
         </div>
       </div>
@@ -81,10 +83,10 @@ export default function DigitalTwin() {
             <div>
               <h3 className="font-bold text-base mb-1 flex items-center gap-2">
                 <Activity className="h-4 w-4 text-blue-500" />
-                Scenario Controls
+                {t('scenarioControls')}
               </h3>
               <p className="text-xs text-muted-foreground mb-4">
-                Adjust your simulated management strategy below to see its impact.
+                {t('scenarioControlsDesc')}
               </p>
             </div>
 
@@ -92,17 +94,17 @@ export default function DigitalTwin() {
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium flex items-center gap-2">
                   <Globe className="h-4 w-4 text-purple-500" />
-                  Macro-Climate
+                  {t('macroClimate')}
                 </label>
               </div>
               <Select value={climateModel} onValueChange={setClimateModel}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select Climate Model" />
+                  <SelectValue placeholder={t('selectClimateModel')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="normal">Normal Cycle (Baseline)</SelectItem>
-                  <SelectItem value="el_nino">El Niño (Severe Drought)</SelectItem>
-                  <SelectItem value="la_nina">La Niña (Heavy Monsoon)</SelectItem>
+                  <SelectItem value="normal">{t('normalCycleBaseline')}</SelectItem>
+                  <SelectItem value="el_nino">{t('elNinoSevereDrought')}</SelectItem>
+                  <SelectItem value="la_nina">{t('laNinaHeavyMonsoon')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -111,7 +113,7 @@ export default function DigitalTwin() {
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium flex items-center gap-2">
                   <Leaf className="h-4 w-4 text-emerald-600" />
-                  Expected Monthly Yield (kg)
+                  {t('expectedMonthlyYield')}
                 </label>
               </div>
               <Input 
@@ -121,7 +123,7 @@ export default function DigitalTwin() {
                 className="font-mono"
               />
               <p className="text-xs text-muted-foreground">
-                Your farm's maximum potential harvest yield per month.
+                {t('expectedYieldDesc')}
               </p>
             </div>
 
@@ -129,10 +131,10 @@ export default function DigitalTwin() {
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium flex items-center gap-2">
                   <Droplets className="h-4 w-4 text-blue-500" />
-                  Irrigation Freq.
+                  {t('irrigationFreq')}
                 </label>
                 <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                  Every {irrigationFreq[0]} Days
+                  {t('every')} {irrigationFreq[0]} {t('days2')}
                 </span>
               </div>
               <Slider
@@ -144,7 +146,7 @@ export default function DigitalTwin() {
                 className="[&_[role=slider]]:bg-blue-500"
               />
               <p className="text-xs text-muted-foreground">
-                How often the fields receive optimal irrigation during dry periods.
+                {t('irrigationFreqDesc')}
               </p>
             </div>
 
@@ -152,10 +154,10 @@ export default function DigitalTwin() {
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium flex items-center gap-2">
                   <ShieldAlert className="h-4 w-4 text-emerald-500" />
-                  Intervention Speed
+                  {t('interventionSpeed')}
                 </label>
                 <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                  {interventionSpeed[0]} Days
+                  {interventionSpeed[0]} {t('days2')}
                 </span>
               </div>
               <Slider
@@ -167,7 +169,7 @@ export default function DigitalTwin() {
                 className="[&_[role=slider]]:bg-emerald-500"
               />
               <p className="text-xs text-muted-foreground">
-                How quickly disease or pest outbreaks are treated after AI detection.
+                {t('interventionSpeedDesc')}
               </p>
             </div>
 
@@ -176,10 +178,10 @@ export default function DigitalTwin() {
           <Card className={`p-4 shadow-sm border-l-4 flex-shrink-0 ${forecastData.length && forecastData[forecastData.length - 1].optimistic >= 0.7 ? 'border-emerald-500' : 'border-amber-500'}`}>
             <h3 className="font-bold mb-2 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              AI Projection Summary
+              {t('aiProjectionSummary')}
             </h3>
             <p className="text-sm leading-relaxed">
-              {loading && !summary ? "Simulating millions of data points..." : summary}
+              {loading && !summary ? t('simulatingDataPoints') : summary}
             </p>
           </Card>
 
@@ -187,19 +189,19 @@ export default function DigitalTwin() {
             <Card className="p-4 shadow-sm border-l-4 border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 flex-shrink-0">
               <h3 className="font-bold mb-3 flex items-center gap-2 text-sm">
                 <IndianRupee className="h-4 w-4 text-blue-500" />
-                5-Year Financial Impact
+                {t('fiveYearFinancialImpact')}
               </h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">BAU Revenue Loss:</span>
+                  <span className="text-muted-foreground">{t('bauRevenueLoss')}</span>
                   <span className="font-semibold text-red-500">₹{(financials.bau_loss / 100000).toFixed(1)}L</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Optimistic Loss:</span>
+                  <span className="text-muted-foreground">{t('optimisticLoss')}</span>
                   <span className="font-semibold text-amber-500">₹{(financials.optimistic_loss / 100000).toFixed(1)}L</span>
                 </div>
                 <div className="pt-2 border-t flex justify-between font-bold">
-                  <span>Net Savings:</span>
+                  <span>{t('netSavings')}</span>
                   <span className="text-emerald-500">₹{(financials.savings / 100000).toFixed(1)} Lakhs</span>
                 </div>
               </div>
@@ -211,16 +213,16 @@ export default function DigitalTwin() {
         <div className="lg:col-span-3 h-full min-h-0">
           <Card className="p-4 h-full flex flex-col shadow-sm">
             <div className="mb-4">
-              <h3 className="font-bold text-base">NDVI Forecast (5-Year Trajectory)</h3>
+              <h3 className="font-bold text-base">{t('ndviForecast5Year')}</h3>
               <p className="text-xs text-muted-foreground">
-                Comparing Business-as-Usual against extreme stress and your customized management plan.
+                {t('ndviForecastDesc')}
               </p>
             </div>
             
             <div className="flex-1 w-full relative">
               {loading && forecastData.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10 rounded-xl">
-                  <div className="animate-pulse font-bold text-muted-foreground">Running 5-Year Simulation...</div>
+                  <div className="animate-pulse font-bold text-muted-foreground">{t('runningSimulation')}</div>
                 </div>
               )}
               
@@ -250,7 +252,7 @@ export default function DigitalTwin() {
                   <Line 
                     type="monotone" 
                     dataKey="optimistic" 
-                    name="Optimistic (Your Plan)" 
+                    name={t('optimisticYourPlan')} 
                     stroke="#10b981" 
                     strokeWidth={4} 
                     dot={false}
@@ -259,7 +261,7 @@ export default function DigitalTwin() {
                   <Line 
                     type="monotone" 
                     dataKey="bau" 
-                    name="Business as Usual" 
+                    name={t('businessAsUsual')} 
                     stroke="#3b82f6" 
                     strokeWidth={2} 
                     strokeDasharray="5 5"
@@ -268,7 +270,7 @@ export default function DigitalTwin() {
                   <Line 
                     type="monotone" 
                     dataKey="stress" 
-                    name="Extreme Stress Scenario" 
+                    name={t('extremeStressScenario')} 
                     stroke="#ef4444" 
                     strokeWidth={2} 
                     strokeDasharray="3 3"

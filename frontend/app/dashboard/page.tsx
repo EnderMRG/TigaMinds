@@ -85,18 +85,18 @@ export default function DashboardPage() {
     },
     {
       id: 'satellite',
-      label: 'Crop Health Monitor',
-      description: 'Planet Labs NDVI satellite analysis',
+      label: t('satelliteCropHealth'),
+      description: t('satelliteCropHealthDesc'),
     },
     {
       id: 'subsidies',
-      label: 'Subsidy Navigator',
-      description: 'Official tea grower schemes & eligibility',
+      label: t('subsidyNavigator'),
+      description: t('subsidyNavigatorDesc'),
     },
     {
       id: 'digital-twin',
-      label: 'Digital Twin',
-      description: '5-Year climate resilience projection',
+      label: t('digitalTwin'),
+      description: t('digitalTwinDesc'),
     },
     {
       id: 'settings',
